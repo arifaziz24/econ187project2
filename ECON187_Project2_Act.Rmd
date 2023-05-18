@@ -5,3 +5,26 @@ date: "2023-05-18"
 output: pdf_document
 ---
 
+# Brief Introduction to Part I:
+
+The data we found explores the relationship between the fat content of multiple different food items against the incidence and prevalence of COVID 19. The data is aggregated from 170 countries (170 observations), and we plan to use a variety of non-linear techniques to create a model that predicts COVID contraction rates from aggregated nutrition variables (pertaining to food fat content). 
+
+# Read & Clean Covid Data:
+```{r}
+# Read Data into Environment
+nutrition <- read.csv("Fat_Supply_Quantity_Data.csv", sep = ",",
+                      header = TRUE)
+head(nutrition)
+
+# See Variable Names
+names(nutrition)
+
+# Keep Variables That We'd Like to Study
+library(dplyr)
+
+# Empty Values (Do This After Removing Unnecessary Variables)
+
+
+
+```
+
