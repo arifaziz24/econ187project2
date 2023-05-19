@@ -135,6 +135,14 @@ regression2 <- lm(Deaths ~.-Confirmed, data = nutrition)
 
 ```
 
+# Creating folds for all Cross-Validation Testing
+```{r}
+library(caret)
+set.seed(123)
+folds <- createFolds(Deaths, k = 5, returnTrain = TRUE)
+```
+
+
 # GAM
 ```{r}
 library(gam)
