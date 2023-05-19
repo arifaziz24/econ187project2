@@ -107,3 +107,7 @@ plot(boruta_covid, main = "Boruta Algorithm Feature Selection", las = 2)
 regression <- lm(Deaths ~. -Confirmed, data = nutrition)
 ```
 
+```{r}
+regression1 <- lm(Deaths ~.-Confirmed, data = nutrition)
+```
+
