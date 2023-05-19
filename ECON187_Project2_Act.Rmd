@@ -128,4 +128,4 @@ regression2 <- lm(Deaths ~.-Confirmed, data = nutrition)
 
 ```
 
-
+jon
