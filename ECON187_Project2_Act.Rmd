@@ -162,6 +162,10 @@ for (i in 1:length(folds)) {
   gam1_preds[test_index] <- gam1_test_preds
 }
 
+# CV MSE
+gam1_cv_mse <- mean((gam1_preds - nutrition_cln$Deaths)^2)
+gam1_cv_mse
+
 
 ```
 
