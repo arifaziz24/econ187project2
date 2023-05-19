@@ -139,7 +139,7 @@ regression2 <- lm(Deaths ~.-Confirmed, data = nutrition)
 ```{r}
 library(caret)
 set.seed(123)
-folds <- createFolds(Deaths, k = 5, returnTrain = TRUE)
+folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 ```
 
 
