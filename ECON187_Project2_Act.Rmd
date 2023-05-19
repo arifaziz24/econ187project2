@@ -92,6 +92,7 @@ removena_undernourished <- which(is.na(nutrition$Undernourished))
 nutrition <- nutrition[-removena_obesity,]
 nutrition <- nutrition[-c(5,11,59,120,124,125,137,144),]
 nrow(nutrition)
+nutrition <- na.omit(nutrition)
 ```
 
 Now that our data set is largely cleaned, removing for predictors we are not interested in and adjusting for empty values, we can now look into feature selection methods. The main one we will use is the Boruta algorithm which uses random forests to pick out a subset of best predictors. We will assume that Covid-19 deaths is our response variable. 
