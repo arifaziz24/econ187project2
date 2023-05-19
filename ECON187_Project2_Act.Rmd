@@ -114,7 +114,11 @@ regression1 <- lm(Deaths ~.-Confirmed, data = nutrition)
 
 ```{r}
 
+<<<<<<< HEAD
 regression2 <- lm(Deaths ~.-Confirmed, data = nutrition)
+=======
+#pls pls pls work 
+>>>>>>> 1a056aceee799ca409d351376946dad655bf1a78
 
 ```
 
