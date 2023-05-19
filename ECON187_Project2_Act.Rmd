@@ -114,7 +114,7 @@ regression1 <- lm(Deaths ~.-Confirmed, data = nutrition)
 
 ```{r}
 
-#pls work
+#pls pls pls work 
 
 ```
 
