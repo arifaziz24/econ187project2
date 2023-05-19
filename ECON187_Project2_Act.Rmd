@@ -125,6 +125,8 @@ nutrition_cln <- nutrition %>% select(-c("Fruits...Excluding.Wine","Spices",
 # Plot For Function: Break Up Variables in 8 Predictor Chunks for Plots
 for (variable in names(nutrition_cln)){
   plot(nutrition_cln[[variable]], nutrition_cln$Deaths, main = paste0(variable," Against COVID-19 Deaths"), ylab = "Population Proportion of Death", xlab = variable)
-}
+} 
+
+names(nutrition_cln)
 ```
 
