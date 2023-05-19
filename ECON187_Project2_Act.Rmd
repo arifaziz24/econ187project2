@@ -140,7 +140,7 @@ folds <- createFolds(nutrition_cln$Deaths, k = 5, returnTrain = TRUE)
 # GAM
 ```{r}
 library(gam)
-gam1 <- gam(Deaths~ s(Eggs), data = nutrition)
+gam1 <- gam(Deaths~ s(Eggs), data = nutrition_cln)
   
 gam2 <- gam(Deaths~)
   
@@ -149,15 +149,15 @@ gam3 <- gam(Deaths~)
 
 ```{r}
 # Initialize an empty vector to store the cross-validated predictions
-gam1_preds <- numeric(length(nutrition$Deaths))
+gam1_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
 for (i in 1:length(folds)) {
   train_index <- folds[[i]]
-  test_index <- setdiff(1:length(nutrition$Deaths), train_index)
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
   
   # Test set preds
-  gam1_test_preds <- predict(gam1, newdata = nutrition[test_index, ])
+  gam1_test_preds <- predict(gam1, newdata = nutrition_cln[test_index, ])
   
   gam1_preds[test_index] <- gam1_test_preds
 }
