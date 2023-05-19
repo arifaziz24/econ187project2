@@ -89,9 +89,10 @@ removena_obesity <- which(is.na(nutrition$Obesity))
 removena_undernourished <- which(is.na(nutrition$Undernourished))
 
 # Remove Further NA Values
-nutrition <- nutrition[-removena_obesity,]
-nutrition <- nutrition[-c(5,11,59,120,124,125,137,144),]
-nrow(nutrition)
+nutritiona <- nutrition[-removena_obesity,]
+nutrition_cln <- nutritiona[-c(5,11,59,120,124,125,136,144),]
+nrow(nutrition_cln)
+nrow(nutritiona)
 ```
 
 Now that our data set is largely cleaned, removing for predictors we are not interested in and adjusting for empty values, we can now look into feature selection methods. The main one we will use is the Boruta algorithm which uses random forests to pick out a subset of best predictors. We will assume that Covid-19 deaths is our response variable. 
@@ -106,9 +107,14 @@ boruta_covid <- Boruta(Deaths~.-Confirmed, data = nutrition, doTrace = 2,
 ```
 
 ```{r}
+# Boruta Plot
 plot(boruta_covid, main = "Boruta Algorithm Feature Selection", las = 2)
 ```
 
+According to our Boruta plot, ten out of the twenty three predictors we shortlisted are significant in explaining and predicting COVID-19 deaths. Moving forward, we'll be using these 10 predictors and applying specific transformations of them (splines, polynomials) to predict COVID-19 deaths. 
+
+
+# Relationship Between Response Variable & Chosen Predictors
 ```{r}
 regression <- lm(Deaths ~. -Confirmed, data = nutrition)
 ```
