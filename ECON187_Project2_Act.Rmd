@@ -6,10 +6,11 @@ output: pdf_document
 ---
 
 #Notes
-
-#add
+#pull 
+#add/save
 #commit 
-#pull(to get someone elses)/push (to give yours to everyone else)
+#pull(to get someone elses)/push (to give yours to everyone else) 
+
 # Brief Introduction to Part I:
 
 The data we found explores the relationship between the fat content of multiple different food items against the incidence and prevalence of COVID 19. The data is aggregated from 170 countries (170 observations), and we plan to use a variety of non-linear techniques to create a model that predicts COVID contraction rates from aggregated nutrition variables (pertaining to food fat content). 
@@ -126,4 +127,5 @@ regression2 <- lm(Deaths ~.-Confirmed, data = nutrition)
 >>>>>>> 1a056aceee799ca409d351376946dad655bf1a78
 
 ```
+
 
