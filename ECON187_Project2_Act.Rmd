@@ -112,27 +112,19 @@ boruta_covid <- Boruta(Deaths~.-Confirmed, data = nutrition, doTrace = 2,
 plot(boruta_covid, main = "Boruta Algorithm Feature Selection", las = 2)
 ```
 
-According to our Boruta plot, ten out of the twenty three predictors we shortlisted are significant in explaining and predicting COVID-19 deaths. Moving forward, we'll be using these 10 predictors and applying specific transformations of them (splines, polynomials) to predict COVID-19 deaths. 
-
+According to our Boruta plot, thirteen out of the twenty three predictors we shortlisted are significant in explaining and predicting COVID-19 deaths. Moving forward, we'll be using these 10 predictors and applying specific transformations of them (splines, polynomials) to predict COVID-19 deaths.  
 
 # Relationship Between Response Variable & Chosen Predictors
 ```{r}
-regression <- lm(Deaths ~. -Confirmed, data = nutrition)
+# Remove Variables Not Approved by Boruta Algorithm:
+nutrition_cln <- nutrition %>% select(-c("Fruits...Excluding.Wine","Spices",
+                                         "Sugar...Sweeteners","Vegetables",
+                                         "Offals","Treenuts","Meat",
+                                         "Starchy.Roots"))
+
+# Plot For Function: Break Up Variables in 8 Predictor Chunks for Plots
+for (variable in names(nutrition_cln)){
+  plot(nutrition_cln[[variable]], nutrition_cln$Deaths, main = paste0(variable," Against COVID-19 Deaths"), ylab = "Population Proportion of Death", xlab = variable)
+}
 ```
 
-```{r}
-regression1 <- lm(Deaths ~.-Confirmed, data = nutrition)
-```
-
-
-```{r}
-
-<<<<<<< HEAD
-regression2 <- lm(Deaths ~.-Confirmed, data = nutrition)
-=======
-#pls pls pls work 
->>>>>>> 1a056aceee799ca409d351376946dad655bf1a78
-
-```
-
-jon
