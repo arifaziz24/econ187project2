@@ -117,10 +117,17 @@ According to our Boruta plot, ten out of the twenty three predictors we shortlis
 
 # Relationship Between Response Variable & Chosen Predictors
 ```{r}
+# Keep Variables We Want to Model
+nutrition_cln <- nutrition %>% select(-c("Fruits...Excluding.Wine","Spices",
+                                         "Sugar...Sweeteners","Vegetables",
+                                         "Offals","Treenuts","Meat",
+                                         "Starchy.Roots"))
 
+# Create For Function to See Plots of All Predictors Against Covid 19 Deaths
+for (variable in names(nutrition_cln)){
+  plot(nutrition_cln[[variable]], nutrition_cln$Deaths, main = paste0("COVID 19 Deaths Against ",variable), xlab = variable, ylab = "Population Proportion of Deaths")
+}
 ```
-
-
 
 # Creating folds for all Cross-Validation Testing
 ```{r}
