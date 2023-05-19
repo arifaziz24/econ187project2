@@ -136,8 +136,11 @@ set.seed(123)
 folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 ```
 
+# Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
 
-# GAM
+# Splines: Arif (Leave Descriptions Until Last, Just Write Code)
+
+# GAM: Jon (Leave Descriptions Until Last, Just Write Code)
 ```{r}
 library(gam)
 gam1 <- gam(Deaths~)
