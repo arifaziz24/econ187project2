@@ -148,7 +148,7 @@ gam3 <- gam(Deaths~)
 ```
 
 ```{r}
-# Initialize an empty vector to store the cross-validated predictions
+# Empty vector for CV preds
 gam1_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
@@ -165,7 +165,6 @@ for (i in 1:length(folds)) {
 # CV MSE
 gam1_cv_mse <- mean((gam1_preds - nutrition_cln$Deaths)^2)
 gam1_cv_mse
-
 
 ```
 
