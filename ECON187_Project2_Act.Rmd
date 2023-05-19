@@ -135,4 +135,18 @@ regression2 <- lm(Deaths ~.-Confirmed, data = nutrition)
 
 ```
 
-jon
+# GAM
+```{r}
+library(gam)
+gam1 <- gam(Deaths~)
+  
+gam2 <- gam(Deaths~)
+  
+gam3 <- gam(Deaths~)
+```
+
+
+
+
+
+
