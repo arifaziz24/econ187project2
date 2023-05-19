@@ -11,6 +11,9 @@ The data we found explores the relationship between the fat content of multiple 
 
 # Read & Clean Covid Data:
 ```{r}
+# Clear Environment:
+rm(list = ls())
+
 # Read Data into Environment
 nutrition <- read.csv("Fat_Supply_Quantity_Data.csv", sep = ",",
                       header = TRUE)
@@ -19,12 +22,85 @@ head(nutrition)
 # See Variable Names
 names(nutrition)
 
-# Keep Variables That We'd Like to Study
-library(dplyr)
+# Distribution/Histogram of Quantitative Variables: Broken into 3 Parts
+# First nine variables
+par(mfrow = c(3,3)) # Break this up because need plots to look clean
+for (variable in names(nutrition)[1:9]) {
+  if (is.numeric(nutrition[[variable]])) {
+    hist(nutrition[[variable]], main = variable, xlab = paste0(variable," values"))
+  }
+}
 
-# Empty Values (Do This After Removing Unnecessary Variables)
+# Second group of nine variables
+par(mfrow = c(3,3))
+for (variable in names(nutrition)[10:18]) {
+  if (is.numeric(nutrition[[variable]])) {
+    hist(nutrition[[variable]], main = variable, xlab = paste0(variable," values"))
+  }
+}
 
+# Last Group of Nine Variables
+par(mfrow = c(3,3))
+for (variable in names(nutrition)[19:27]) {
+  if (is.numeric(nutrition[[variable]])) {
+    hist(nutrition[[variable]], main = variable, xlab = paste0(variable," values"))
+  }
+}
 
-
+# Last Group of 5 Variables
+par(mfrow = c(3,2))
+for (variable in names(nutrition)[28:32]) {
+  if (is.numeric(nutrition[[variable]])) {
+    hist(nutrition[[variable]], main = variable, xlab = paste0(variable," values"))
+  }
+}
 ```
+
+There are a lot of predictors in this data set, representing the fat contents of various foods. We want to model for variables that show a high degree of variation. We can pick out these predictors from their histograms. Those that are concentrated at certain values may not give us the insights into predicting the incidence of COVID-19 in different countries. For example, aquatic products and their fat contents don't exhibit strong variation. This makes sense since some countries may not have aquatic products. Though this variable may help to predict COVID 19 incidence in countries that do consume aquatic products, it may pick up dynamics in non-aquatic consuming countries that do not exist in the data. 
+
+We also want to remove variables that may contain similar information to others, such as "Sugar Crops" and "Sugar Sweetners". Our main response variables are COVID-19 deaths and confirmed cases. These represent proportions of a country's total population.  
+
+```{r}
+# Keep Variables That We'd Like to Study 
+library(dplyr)
+nutrition <- nutrition %>% select(-c("Country", "Alcoholic.Beverages",
+                                     "Aquatic.Products..Other", "Oilcrops",
+                                     "Sugar.Crops", "Population",
+                                     "Unit..all.except.Population.", "Recovered",
+                                     "Active"))
+
+# Remove Empty NA Values, Assuming Death Rate is Our Main Response Variable
+removena <- which(is.na(nutrition$Deaths))
+nutrition <- nutrition[-removena,]
+nrow(nutrition)
+
+# Check to See if Any Other NA Values in Main Variables:
+for (variable in names(nutrition)){
+  print(paste0(variable," has NA values: ",any(is.na(nutrition[[variable]]))))
+} # See That Obesity and Undernourished Variables Still Have NA Values
+
+removena_obesity <- which(is.na(nutrition$Obesity))
+removena_undernourished <- which(is.na(nutrition$Undernourished))
+
+# Remove Further NA Values
+nutrition <- nutrition[-removena_obesity,]
+nutrition <- nutrition[-c(5,11,59,120,124,125,137,144),]
+nrow(nutrition)
+```
+
+Now that our data set is largely cleaned, removing for predictors we are not interested in and adjusting for empty values, we can now look into feature selection methods. The main one we will use is the Boruta algorithm which uses random forests to pick out a subset of best predictors. We will assume that Covid-19 deaths is our response variable. 
+
+# Feature Selection
+```{r, echo = FALSE}
+# Boruta Algorithm
+library(Boruta)
+library(randomForest)
+boruta_covid <- Boruta(Deaths~.-Confirmed, data = nutrition, doTrace = 2, 
+                       randomForest = TRUE)
+```
+
+```{r}
+plot(boruta_covid, main = "Boruta Algorithm Feature Selection", las = 2)
+```
+
 
