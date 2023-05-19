@@ -126,18 +126,36 @@ According to our Boruta plot, ten out of the twenty three predictors we shortlis
 ```{r}
 library(caret)
 set.seed(123)
-folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
+folds <- createFolds(nutrition_cln$Deaths, k = 5, returnTrain = TRUE)
 ```
 
 
 # GAM
 ```{r}
 library(gam)
-gam1 <- gam(Deaths~)
+gam1 <- gam(Deaths~ s(Eggs), data = nutrition)
   
 gam2 <- gam(Deaths~)
   
 gam3 <- gam(Deaths~)
+```
+
+```{r}
+# Initialize an empty vector to store the cross-validated predictions
+gam1_preds <- numeric(length(nutrition$Deaths))
+
+# CV loop
+for (i in 1:length(folds)) {
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition$Deaths), train_index)
+  
+  # Test set preds
+  gam1_test_preds <- predict(gam1, newdata = nutrition[test_index, ])
+  
+  gam1_preds[test_index] <- gam1_test_preds
+}
+
+
 ```
 
 
