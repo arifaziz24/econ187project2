@@ -133,14 +133,25 @@ for (variable in names(nutrition_cln)){
 ```{r}
 library(caret)
 set.seed(123)
-folds <- createFolds(nutrition_cln$Deaths, k = 5, returnTrain = TRUE)
+folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
+```
+
+# Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
+```{r}
+
 ```
 
 
-# GAM
+# Splines: Arif (Leave Descriptions Until Last, Just Write Code)
+```{r}
+
+```
+
+
+# GAM: Jon (Leave Descriptions Until Last, Just Write Code)
 ```{r}
 library(gam)
-gam1 <- gam(Deaths~ s(Eggs), data = nutrition_cln)
+gam1 <- gam(Deaths~)
   
 gam2 <- gam(Deaths~)
   
