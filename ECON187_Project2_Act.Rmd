@@ -151,11 +151,6 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 # GAM: Jon (Leave Descriptions Until Last, Just Write Code)
 ```{r}
 library(gam)
-gam1 <- gam(Deaths~ s(Eggs) + s(Obesity), data = nutrition_cln)
-
-gam2 <- gam(Deaths~ s(Obesity) + poly(Eggs, 4), data = nutrition_cln)
-  
-gam3 <- gam(Deaths~ poly(Eggs, 3) + Obesity, data = nutrition_cln)
 ```
 
 
@@ -166,12 +161,14 @@ gam1_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
 for (i in 1:length(folds)) {
-  train_index <- folds[[i]]
-  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  test_index <- folds[[i]]
+  train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
+  
+  # Define GAM
+  gam1 <- gam(Deaths~ s(Eggs) + s(Obesity), data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam1_test_preds <- predict(gam1, newdata = nutrition_cln[test_index, ])
-  
   gam1_preds[test_index] <- gam1_test_preds
 }
 
@@ -189,8 +186,11 @@ gam2_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
 for (i in 1:length(folds)) {
-  train_index <- folds[[i]]
-  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  test_index <- folds[[i]]
+  train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
+  
+  # Define GAM
+  gam2 <- gam(Deaths~ s(Obesity) + poly(Eggs, 4), data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam2_test_preds <- predict(gam2, newdata = nutrition_cln[test_index, ])
@@ -210,8 +210,11 @@ gam3_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
 for (i in 1:length(folds)) {
-  train_index <- folds[[i]]
-  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  test_index <- folds[[i]]
+  train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
+  
+  # Define GAM
+  gam3 <- gam(Deaths~ poly(Eggs, 3) + Obesity, data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam3_test_preds <- predict(gam3, newdata = nutrition_cln[test_index, ])
