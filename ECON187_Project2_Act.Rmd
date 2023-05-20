@@ -148,26 +148,68 @@ Since we have many predictors to account for, I'll be optimizing each predictor 
 
 ```{r}
 # Cross Validation for Each Variable Using Splines and Basis Functions 
+library(splines)
 variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
 
-for (variable in names(nutrition_cln)[-length(nutrition_cln)]){ 
-  # This Loop Runs Through All Predictors and Not the Response Variable "Deaths"
-  for (i in 1:length(folds)){
-    test_index <- folds[[i]]
-    train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
-    for (i in 1:10){
-      bsfit <- lm(Deaths ~ ns(variable, df = i), data = nutrition_cln, 
-                              subset = train_index)
-      summary(bsfit) # just to test this shit is working
-    }
+### Animal Products Test ###
+cv_num_vector <- 4:15 # First Column of Data to Represent Degrees of Freedom
+cv_error_df <- data.frame(cv_num_vector) # Put Column into Data Frame
+emptyvector <- vector() # Vector for Mean Squared Error Scores
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  for (j in 4:15){
+    fit <- lm(Deaths ~ ns(Animal.Products, df = j), data = nutrition_cln, 
+              subset = train_index) # Fit Natural Spline (Cubic) Varying DFs
+    prediction <- predict(fit, newdata = nutrition_test) # Predict on Test Set
+    mse_score <- mean((nutrition_test$Deaths-prediction)^2) # MSE Calculation
+    emptyvector[j-3] <- round(mse_score,6)
   }
+  cv_error_df <- cbind(cv_error_df,emptyvector) # Add MSE from DF into Data Frame
+  emptyvector <- vector() # Empty Vector
 }
 
-for (variable in names(nutrition_cln)[-14]){ 
-  formula <- paste("Deaths ~", variable)
-  bsfit <- lm(formula, data = nutrition_cln)
-  print(summary(bsfit))}
+# Clean Data Frame & Return Values to Main Data Frame
+colnames(cv_error_df) <- c("Degrees of Freedom","Fold 1", "Fold 2", "Fold 3", 
+                           "Fold 4", "Fold 5")
+cv_error_df$Means <- round(rowMeans(cv_error_df[,2:6]),6)
+print(cv_error_df)
+print(paste0("Minimum Degree of Freedom for Animal.Products Natural Spline: ",
+             cv_error_df[which.min(cv_error_df$Means),1])) 
+variable_list[["Animal.Products"]] <- c(cv_error_df[which.min(cv_error_df$Means),1],
+                             min(cv_error_df$Means))
 
+### Animal Fats Test ###
+cv_num_vector <- 4:15 # First Column of Data to Represent Degrees of Freedom
+cv_error_df <- data.frame(cv_num_vector) # Put Column into Data Frame
+emptyvector <- vector() # Vector for Mean Squared Error Scores
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  for (j in 4:15){
+    fit <- lm(Deaths ~ ns(Animal.fats, df = j), data = nutrition_cln, 
+              subset = train_index) # Fit Natural Spline (Cubic) Varying DFs
+    prediction <- predict(fit, newdata = nutrition_test) # Predict on Test Set
+    mse_score <- mean((nutrition_test$Deaths-prediction)^2) # MSE Calculation
+    emptyvector[j-3] <- round(mse_score,6)
+  }
+  cv_error_df <- cbind(cv_error_df,emptyvector) # Add MSE from DF into Data Frame
+  emptyvector <- vector() # Empty Vector
+}
+
+# Clean Data Frame & Return Values to Main Data Frame
+colnames(cv_error_df) <- c("Degrees of Freedom","Fold 1", "Fold 2", "Fold 3", 
+                           "Fold 4", "Fold 5")
+cv_error_df$Means <- round(rowMeans(cv_error_df[,2:6]),6)
+print(cv_error_df)
+print(paste0("Minimum Degree of Freedom for Animal.fats Natural Spline: ",
+             cv_error_df[which.min(cv_error_df$Means),1])) 
+variable_list[["Animal.fats"]] <- c(cv_error_df[which.min(cv_error_df$Means),1],
+                             min(cv_error_df$Means))
 ```
 
 
