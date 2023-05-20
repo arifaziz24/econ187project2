@@ -138,12 +138,22 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 
 # Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
 ```{r}
-# Cross Validation for 
+
 ```
 
 
 # Splines: Arif (Leave Descriptions Until Last, Just Write Code)
+
+Since we have many predictors to account for, I'll be optimizing each predictor against our response variable (COVID-19 deaths) individually and separately. In order to fit splines to our data, We'll be using a matrix of spline functions, or basis functions (bs()). Though we could individually set knots for each variable and test its general performance, we do not have a strong understanding of nutritional theory. Thus, instead, we'll use cross-validation techniques to optimize the degrees of freedom for each predictor and their corresponding basis functions. The degrees of freedom take into account the best knots for the predictors. Instead of mixing and matching different predictors and their basis functions, we'll be working on each predictor's basis functions individually, then compiling the best based on cross-validation performance. 
+
 ```{r}
+# Cross Validation for Each Variable Using Splines and Basis Functions 
+variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
+
+for (variable in names(nutrition_cln)[-length(nutrition_cln)]){ 
+  # This Loop Runs Through All Predictors and Not the Response Variable "Deaths"
+  for (i in 1:)
+}
 
 ```
 
