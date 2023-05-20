@@ -121,7 +121,7 @@ According to our Boruta plot, ten out of the twenty three predictors we shortlis
 nutrition_cln <- nutrition %>% select(-c("Fruits...Excluding.Wine","Spices",
                                          "Sugar...Sweeteners","Vegetables",
                                          "Offals","Treenuts","Meat",
-                                         "Starchy.Roots"))
+                                         "Starchy.Roots", "Confirmed"))
 
 # Create For Function to See Plots of All Predictors Against Covid 19 Deaths
 for (variable in names(nutrition_cln)){
@@ -138,7 +138,7 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 
 # Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
 ```{r}
-
+# Cross Validation for 
 ```
 
 
