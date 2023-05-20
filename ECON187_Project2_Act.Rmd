@@ -152,8 +152,21 @@ variable_list <- list() # Empty List to Store Performance Scores for Each Predic
 
 for (variable in names(nutrition_cln)[-length(nutrition_cln)]){ 
   # This Loop Runs Through All Predictors and Not the Response Variable "Deaths"
-  for (i in 1:)
+  for (i in 1:length(folds)){
+    test_index <- folds[[i]]
+    train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
+    for (i in 1:10){
+      bsfit <- lm(Deaths ~ ns(variable, df = i), data = nutrition_cln, 
+                              subset = train_index)
+      summary(bsfit) # just to test this shit is working
+    }
+  }
 }
+
+for (variable in names(nutrition_cln)[-14]){ 
+  formula <- paste("Deaths ~", variable)
+  bsfit <- lm(formula, data = nutrition_cln)
+  print(summary(bsfit))}
 
 ```
 
