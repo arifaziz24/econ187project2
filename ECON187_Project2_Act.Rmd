@@ -544,8 +544,220 @@ print(paste0("Minimum Degree of Freedom for Undernourished Natural Spline: ",
              cv_error_df[which.min(cv_error_df$Means),1])) 
 variable_list[["Undernourished"]] <- c(cv_error_df[which.min(cv_error_df$Means),1],
                              min(cv_error_df$Means)) 
+
+### Print Full Variable List ####
+print(variable_list) # Natural Splines Fit for Individual Variables
 ```
 
+Looking at our full list of variables and their natural spline performance, we see that the natural splines that returned the lowest MSE scores were: Obesity, Undernourished, Eggs, Animal Products, Vegetal Products, and Animal Fats. All of these natural splines produced an MSE score of below 0.002. Moreover, we ran for loops that tested degrees of freedom between 4 and 15 and surprisingly most of our optimal degrees of freedom for each individual variable are below 6. This in theory reduces potential overfitting in testing sets. Moving forward, we will consider potential combinations of these splines, emphasizing the variables that performed the best in our (natural spline) cross validation exercise. In order to figure out which combinations of variables are optimal, we'll be using a cross-validation approach using the same folds set before. We'll be comparing MSE and AIC/BIC scores. Though there may be more robust algorithms that can optimize a variety of combinations of variables, we'll be using an approach similar to forward step-wise selection. In this version, we'll be adding the best natural spline variables in order of their MSE performance from the previous section. 
+
+Order: Obesity, Eggs, Undernourished, Animal Products, Vegetal Products, Animal Fats
+
+```{r}
+###### Assess & Try Different Combinations of Natural Splines #####
+mse_vector_ns <- vector()
+bic_vector_ns <- vector()
+model_comp_df <- data.frame()
+
+# Model 1 Natural Splines: Obesity Only
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  
+  # Model Fit & Predict on Testing Data
+  model <- lm(Deaths ~ ns(Obesity,4), data = nutrition_cln, subset = train_index)
+  predictions <- predict(model, newdata = nutrition_test) 
+  
+  # MSE Calculation & Input into Vector
+  mse_score <- mean((nutrition_test$Deaths-predictions)^2) 
+  mse_vector_ns[i] <- mse_score
+  
+  # BIC Calculation
+  n <- nrow(nutrition_test) # For AIC/BIC Calculations
+  p <- length(model$coefficients) # Number of Parameters, Will Change Between Models
+  bic_vector_ns[i] <- (n*log(mse_score))+(p*log(n))
+}
+
+model1 <- c(mean(mse_vector_ns),mean(bic_vector_ns)) 
+model_comp_df <- data.frame(model1)
+rownames(model_comp_df) <- c("MSE", "BIC")  
+
+# Model 2 Natural Splines: Obesity, Eggs
+
+mse_vector_ns <- vector() # Reset Vectors
+bic_vector_ns <- vector()
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  
+  # Model Fit & Predict on Testing Data
+  model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4), data = nutrition_cln, 
+              subset = train_index)
+  predictions <- predict(model, newdata = nutrition_test) 
+  
+  # MSE Calculation & Input into Vector
+  mse_score <- mean((nutrition_test$Deaths-predictions)^2) 
+  mse_vector_ns[i] <- mse_score
+  
+  # BIC Calculation
+  n <- nrow(nutrition_test) # For AIC/BIC Calculations
+  p <- length(model$coefficients) # Number of Parameters, Will Change Between Models
+  bic_vector_ns[i] <- (n*log(mse_score))+(p*log(n))
+}
+
+model2 <- c(mean(mse_vector_ns),mean(bic_vector_ns)) 
+model_comp_df <- cbind(model_comp_df, model2)
+
+# Model 3 Natural Splines: Obesity, Eggs, Undernourished
+
+mse_vector_ns <- vector() # Reset Vectors
+bic_vector_ns <- vector()
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  
+  # Model Fit & Predict on Testing Data
+  model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4)+ns(Undernourished,4), 
+              data = nutrition_cln, subset = train_index)
+  predictions <- predict(model, newdata = nutrition_test) 
+  
+  # MSE Calculation & Input into Vector
+  mse_score <- mean((nutrition_test$Deaths-predictions)^2) 
+  mse_vector_ns[i] <- mse_score
+  
+  # BIC Calculation
+  n <- nrow(nutrition_test) # For AIC/BIC Calculations
+  p <- length(model$coefficients) # Number of Parameters, Will Change Between Models
+  bic_vector_ns[i] <- (n*log(mse_score))+(p*log(n))
+}
+
+model3 <- c(mean(mse_vector_ns),mean(bic_vector_ns)) 
+model_comp_df <- cbind(model_comp_df, model3)
+
+# Model 4 Natural Splines: Obesity, Eggs, Undernourished, Animal Products
+
+mse_vector_ns <- vector() # Reset Vectors
+bic_vector_ns <- vector()
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  
+  # Model Fit & Predict on Testing Data
+  model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4)+ns(Undernourished,4)+
+                ns(Animal.Products,5)+ns(), data = nutrition_cln, subset = train_index)
+  predictions <- predict(model, newdata = nutrition_test) 
+  
+  # MSE Calculation & Input into Vector
+  mse_score <- mean((nutrition_test$Deaths-predictions)^2) 
+  mse_vector_ns[i] <- mse_score
+  
+  # BIC Calculation
+  n <- nrow(nutrition_test) # For AIC/BIC Calculations
+  p <- length(model$coefficients) # Number of Parameters, Will Change Between Models
+  bic_vector_ns[i] <- (n*log(mse_score))+(p*log(n))
+}
+
+model4 <- c(mean(mse_vector_ns),mean(bic_vector_ns)) 
+model_comp_df <- cbind(model_comp_df, model4)
+
+# Model 5 Natural Splines: Obesity, Eggs, Undernourished, Ani Prod, Veg Products
+
+mse_vector_ns <- vector() # Reset Vectors
+bic_vector_ns <- vector()
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  
+  # Model Fit & Predict on Testing Data
+  model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4)+ns(Undernourished,4)+
+                ns(Animal.Products,5)+ns(Vegetal.Products,5), 
+              data = nutrition_cln, subset = train_index)
+  predictions <- predict(model, newdata = nutrition_test) 
+  
+  # MSE Calculation & Input into Vector
+  mse_score <- mean((nutrition_test$Deaths-predictions)^2) 
+  mse_vector_ns[i] <- mse_score
+  
+  # BIC Calculation
+  n <- nrow(nutrition_test) # For AIC/BIC Calculations
+  p <- length(model$coefficients) # Number of Parameters, Will Change Between Models
+  bic_vector_ns[i] <- (n*log(mse_score))+(p*log(n))
+}
+
+model5 <- c(mean(mse_vector_ns),mean(bic_vector_ns)) 
+model_comp_df <- cbind(model_comp_df, model5)
+
+# Model 6 Natural Splines: Obesity, Eggs, Under, Ani Prod, Veg Products, Ani Fat
+
+mse_vector_ns <- vector() # Reset Vectors
+bic_vector_ns <- vector()
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  
+  # Model Fit & Predict on Testing Data
+  model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4)+ns(Undernourished,4)+
+                ns(Animal.Products,5)+ns(Vegetal.Products,5)+
+                ns(Animal.fats,4), data = nutrition_cln, subset = train_index)
+  predictions <- predict(model, newdata = nutrition_test) 
+  
+  # MSE Calculation & Input into Vector
+  mse_score <- mean((nutrition_test$Deaths-predictions)^2) 
+  mse_vector_ns[i] <- mse_score
+  
+  # BIC Calculation
+  n <- nrow(nutrition_test) # For AIC/BIC Calculations
+  p <- length(model$coefficients) # Number of Parameters, Will Change Between Models
+  bic_vector_ns[i] <- (n*log(mse_score))+(p*log(n))
+}
+
+model6 <- c(mean(mse_vector_ns),mean(bic_vector_ns)) 
+model_comp_df <- cbind(model_comp_df, model6) 
+
+# Sanity Check Model Natural Splines: Obesity, Animal Products
+
+mse_vector_ns <- vector() # Reset Vectors
+bic_vector_ns <- vector()
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  
+  # Model Fit & Predict on Testing Data
+  model <- lm(Deaths ~ ns(Obesity,4)+ns(Animal.Products,5), 
+              data = nutrition_cln, subset = train_index)
+  predictions <- predict(model, newdata = nutrition_test) 
+  
+  # MSE Calculation & Input into Vector
+  mse_score <- mean((nutrition_test$Deaths-predictions)^2) 
+  mse_vector_ns[i] <- mse_score
+  
+  # BIC Calculation
+  n <- nrow(nutrition_test) # For AIC/BIC Calculations
+  p <- length(model$coefficients) # Number of Parameters, Will Change Between Models
+  bic_vector_ns[i] <- (n*log(mse_score))+(p*log(n))
+}
+
+mean(mse_vector_ns)
+mean(bic_vector_ns) #See That These Values Are Not As Optimal As Comparable Mdl2
+
+# Analyze Full Natural Spline Fit Models:
+print(model_comp_df)
+```
+
+Taking into account MSE and BIC values, we are left with conflicting conclusions. BIC would favor our first model with a natural spline on obesity. This model has the lowest number of parameters favoring its BIC score. In terms of MSE, it does not perform as well as model 2 which takes a natural spline of obesity and egg fat content. Out of the 6 models we tested (using a quasi-forward step selection method), model 2 returned the lowest MSE score. Since we are most concerned about prediction accuracy over parsimony (though model 2 is still quite parsimonious), our natural spline exercise point towards using a natural spline regression of two predictors: obesity and eggs with knot degrees of freedom of 4 for both. We ran a sanity check by creating a model with obesity (by far the best natural spline predictor) and another strong natural spline predictor (animal fats). This sanity check was to see if there were other possible and more optimal predictor interactions outside of our forward stepwise method. The MSE and BIC for that two predictor model was not as optimal as its forward stepwise counterpart model 2 with obesity and egg as predictors. Moving forward, we'll look into generalized additive methods. 
 
 # GAM: Jon (Leave Descriptions Until Last, Just Write Code)
 ```{r}
