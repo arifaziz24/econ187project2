@@ -226,8 +226,8 @@ gam1_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
 for (i in 1:length(folds)) {
-  test_index <- folds[[i]]
-  train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
   
   # Define GAM
   gam1 <- gam(Deaths~ s(Eggs) + s(Obesity), data = nutrition_cln, subset = train_index)
@@ -251,8 +251,8 @@ gam2_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
 for (i in 1:length(folds)) {
-  test_index <- folds[[i]]
-  train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
   
   # Define GAM
   gam2 <- gam(Deaths~ s(Obesity) + poly(Eggs, 4), data = nutrition_cln, subset = train_index)
@@ -268,15 +268,15 @@ gam2_cv_mse <- mean((gam2_preds - nutrition_cln$Deaths)^2)
 gam2_cv_mse
 ```
 
-GAM 3 CV 
+GAM 3 CV
 ```{r}
 # Empty vector for CV preds
 gam3_preds <- numeric(length(nutrition_cln$Deaths))
 
 # CV loop
 for (i in 1:length(folds)) {
-  test_index <- folds[[i]]
-  train_index <- setdiff(1:length(nutrition_cln$Deaths), test_index)
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
   
   # Define GAM
   gam3 <- gam(Deaths~ poly(Eggs, 3) + Obesity, data = nutrition_cln, subset = train_index)
