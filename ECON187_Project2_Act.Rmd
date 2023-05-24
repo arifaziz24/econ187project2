@@ -652,7 +652,7 @@ for (i in 1:length(folds)){
   
   # Model Fit & Predict on Testing Data
   model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4)+ns(Undernourished,4)+
-                ns(Animal.Products,5)+ns(), data = nutrition_cln, subset = train_index)
+                ns(Animal.Products,5), data = nutrition_cln, subset = train_index)
   predictions <- predict(model, newdata = nutrition_test) 
   
   # MSE Calculation & Input into Vector
