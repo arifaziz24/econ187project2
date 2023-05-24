@@ -116,7 +116,6 @@ According to our Boruta plot, ten out of the twenty three predictors we shortlis
 
 Here are the best predictors according to Boruta: "Stimulants", "Pulses", "Vegetable.Oils", "Miscellaneous", "Undernourished", "Milk...Excluding.Butter", "Fish..Seafood", "Vegetal.Products", "Animal.Products", "Animal.fats", "Eggs", "Obesity".
 
-
 # Relationship Between Response Variable & Chosen Predictors
 ```{r}
 # Keep Variables We Want to Model
