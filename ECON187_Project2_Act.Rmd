@@ -839,4 +839,9 @@ gam3_cv_mse <- mean((gam3_preds - nutrition_cln$Deaths)^2)
 gam3_cv_mse
 
 ```
-Test 3
+
+```{r}
+boruta_covid <- Boruta(Deaths~.-Confirmed, data = nutrition, doTrace = 2, 
+                       randomForest = TRUE)
+```
+
