@@ -877,7 +877,7 @@ if (has_na_2) {
   cat("clean")
 }
 
-credit_cln
+head(credit_cln)
 
 ```
 
@@ -887,22 +887,24 @@ credit_cln
 library(rpart)
 # install.packages("tree")
 library(tree)
+# install.packages("rpart.plot")
+library(rpart.plot)
 ```
 
 # Regression Tree
 ```{r}
-
-# 
-# reg.tree.model <- tree(Credit_score ~ Monthly_Balance, data=credit_cln)
+# reg.tree.model <- tree( ~., data=credit_cln)
 # plot(reg.tree.model)
 # text(reg.tree.model, cex=.75)
 ```
 
 # Classification Tree
 ```{r}
-# class.tree.model <- tree(log(MedianHouseValue) ~ Longitude + Latitude, data=real.estate)
-# plot(class.tree.model)
-# text(class.tree.model, cex=.75)
+
+class.tree.model <- rpart(Credit_Score ~., data = credit_cln, 
+                    control = rpart.control(maxdepth = 2), method = "class")
+plot(class.tree.model)
+text(class.tree.model, cex=.75)
 ```
 
 
