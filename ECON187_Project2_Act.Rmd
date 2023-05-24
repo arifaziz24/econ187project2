@@ -839,4 +839,4 @@ gam3_cv_mse <- mean((gam3_preds - nutrition_cln$Deaths)^2)
 gam3_cv_mse
 
 ```
-Test 2
+Test 3
