@@ -841,7 +841,6 @@ gam3_cv_mse
 ```
 
 ```{r}
-boruta_covid <- Boruta(Deaths~.-Confirmed, data = nutrition, doTrace = 2, 
-                       randomForest = TRUE)
+
 ```
 
