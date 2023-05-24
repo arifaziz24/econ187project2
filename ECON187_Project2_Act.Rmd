@@ -114,6 +114,8 @@ plot(boruta_covid, main = "Boruta Algorithm Feature Selection", las = 2)
 
 According to our Boruta plot, ten out of the twenty three predictors we shortlisted are significant in explaining and predicting COVID-19 deaths. Moving forward, we'll be using these 10 predictors and applying specific transformations of them (splines, polynomials) to predict COVID-19 deaths. 
 
+Here are the best predictors according to Boruta: "Stimulants", "Pulses", "Vegetable.Oils", "Miscellaneous", "Undernourished", "Milk...Excluding.Butter", "Fish..Seafood", "Vegetal.Products", "Animal.Products", "Animal.fats", "Eggs", "Obesity".
+
 
 # Relationship Between Response Variable & Chosen Predictors
 ```{r}
