@@ -122,6 +122,7 @@ nutrition_cln <- nutrition %>% select(-c("Fruits...Excluding.Wine","Spices",
                                          "Offals","Treenuts","Meat",
                                          "Starchy.Roots", "Confirmed"))
 
+
 # Convert Undernourished into Numerical Variable
 nutrition_cln$Undernourished[nutrition_cln$Undernourished == "<2.5"] <- 2.5
 nutrition_cln$Undernourished <- as.numeric(nutrition_cln$Undernourished) # make numeric
@@ -138,12 +139,90 @@ for (variable in names(nutrition_cln)){
 library(caret)
 set.seed(123)
 folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
+
 ```
 
 # Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
 
 ```{r}
+# Empty List to Store Performance Scores for Each Predictor
+variable_list <- list()
 
+# Variables to process
+variables <- c("Stimulants", "Pulses", "Vegetable.Oils", "Miscellaneous", "Undernourished",
+               "Milk...Excluding.Butter", "Fish..Seafood", "Vegetal.Products", "Animal.Products",
+               "Animal.fats", "Eggs", "Obesity")
+
+# Perform calculations for each variable
+for (variable in variables) {
+  cv_num_vector <- 4:15 # First Column of Data to Represent Degrees of Freedom
+  cv_error_df <- data.frame(cv_num_vector) # Put Column into Data Frame
+  emptyvector <- vector() # Vector for Mean Squared Error Scores
+  
+  for (i in 1:length(folds)) {
+    train_index <- folds[[i]]
+    test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+    nutrition_test <- nutrition_cln[test_index,]
+    
+    for (j in 4:15) {
+      formula <- paste("Deaths ~ poly(", variable, ", degree = ", j, ", raw = TRUE)", sep = "")
+      fit <- lm(formula, data = nutrition_cln, subset = train_index) # Fit Piecewise Polynomial with specified degree
+      prediction <- predict(fit, newdata = nutrition_test) # Predict on Test Set
+      mse_score <- mean((nutrition_test$Deaths - prediction)^2) # MSE Calculation
+      emptyvector[j-3] <- round(mse_score, 6)
+    }
+    
+    cv_error_df <- cbind(cv_error_df, emptyvector) # Add MSE from DF into Data Frame
+    emptyvector <- vector() # Empty Vector
+  }
+  
+  # Clean Data Frame & Return Values to Main Data Frame
+  colnames(cv_error_df) <- c("Degrees of Freedom", "Fold 1", "Fold 2", "Fold 3", "Fold 4", "Fold 5")
+  cv_error_df$Means <- round(rowMeans(cv_error_df[, 2:6]), 6)
+  print(cv_error_df)
+  
+  # Store results in variable_list
+  variable_list[[variable]] <- c(cv_error_df[which.min(cv_error_df$Means), 1], min(cv_error_df$Means))
+}
+
+# Print the results
+print(variable_list)
+
+
+```
+
+```{r}
+variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
+
+### Animal Products Test ###
+cv_num_vector <- 4:15 # First Column of Data to Represent Degrees of Freedom
+cv_error_df <- data.frame(cv_num_vector) # Put Column into Data Frame
+emptyvector <- vector() # Vector for Mean Squared Error Scores
+
+for (i in 1:length(folds)){
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  nutrition_test <- nutrition_cln[test_index,]
+  for (j in 4:15){
+    fit <- lm(Deaths ~ poly(Animal.Products, degree = j, raw = TRUE), data = nutrition_cln, 
+              subset = train_index) # Fit Piecewise Polynomial with specified degree
+    prediction <- predict(fit, newdata = nutrition_test) # Predict on Test Set
+    mse_score <- mean((nutrition_test$Deaths - prediction)^2) # MSE Calculation
+    emptyvector[j-3] <- round(mse_score, 6)
+  }
+  cv_error_df <- cbind(cv_error_df, emptyvector) # Add MSE from DF into Data Frame
+  emptyvector <- vector() # Empty Vector
+}
+
+# Clean Data Frame & Return Values to Main Data Frame
+colnames(cv_error_df) <- c("Degrees of Freedom", "Fold 1", "Fold 2", "Fold 3", 
+                           "Fold 4", "Fold 5")
+cv_error_df$Means <- round(rowMeans(cv_error_df[, 2:6]), 6)
+print(cv_error_df)
+print(paste0("Minimum Degree of Freedom for Animal.Products Piecewise Polynomial: ",
+             cv_error_df[which.min(cv_error_df$Means), 1]))
+variable_list[["Animal.Products"]] <- c(cv_error_df[which.min(cv_error_df$Means), 1],
+                                        min(cv_error_df$Means))
 ```
 
 # Splines: Arif (Leave Descriptions Until Last, Just Write Code)
@@ -906,7 +985,34 @@ library(tree)
 ```
 
 
+# Piecewise Polynomial 
 
+```{r}
+library(ggplot2)
+
+y <- nutrition$Obesity
+X <- nutrition$Undernourished
+X <- as.numeric(as.character(X))
+missing_rows <- is.na(X) | is.na(y) 
+y <- y[!missing_rows]
+X <- X[!missing_rows]
+
+breakpoints <- seq(10, 50, by = 10)  # Set the breakpoints increment and range
+pred_terms <- lapply(breakpoints, function(b) I((X - b) * (X >= b)))
+
+pred7 <- predict(lm(y ~ X + Reduce("+", pred_terms), data = nutrition))
+
+# Create a dataframe with the clean variables
+pred_df <- data.frame(X = X, pred7 = pred7, y = y)
+
+tri.age.plot <- ggplot(pred_df, aes(x = X, y = y)) +
+  geom_point(alpha = 0.55, color = "black") +
+  theme_minimal()
+
+tri.age.plot +
+  geom_line(data = pred_df, aes(y = pred7), size = 1, col = "blue")
+
+```
 
 
 
