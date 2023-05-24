@@ -5,15 +5,11 @@ date: "2023-05-18"
 output: pdf_document
 ---
 
-#Notes
-#pull 
-#add/save
-#commit 
-#pull(to get someone elses)/push (to give yours to everyone else) 
+#Notes #pull #add/save #commit #pull(to get someone elses)/push (to give yours to everyone else)
 
 # Brief Introduction to Part I:
 
-The data we found explores the relationship between the fat content of multiple different food items against the incidence and prevalence of COVID 19. The data is aggregated from 170 countries (170 observations), and we plan to use a variety of non-linear techniques to create a model that predicts COVID contraction rates from aggregated nutrition variables (pertaining to food fat content). 
+The data we found explores the relationship between the fat content of multiple different food items against the incidence and prevalence of COVID 19. The data is aggregated from 170 countries (170 observations), and we plan to use a variety of non-linear techniques to create a model that predicts COVID contraction rates from aggregated nutrition variables (pertaining to food fat content).
 
 # Read & Clean Covid Data:
 ```{r}
@@ -62,9 +58,9 @@ for (variable in names(nutrition)[28:32]) {
 }
 ```
 
-There are a lot of predictors in this data set, representing the fat contents of various foods. We want to model for variables that show a high degree of variation. We can pick out these predictors from their histograms. Those that are concentrated at certain values may not give us the insights into predicting the incidence of COVID-19 in different countries. For example, aquatic products and their fat contents don't exhibit strong variation. This makes sense since some countries may not have aquatic products. Though this variable may help to predict COVID 19 incidence in countries that do consume aquatic products, it may pick up dynamics in non-aquatic consuming countries that do not exist in the data. 
+There are a lot of predictors in this data set, representing the fat contents of various foods. We want to model for variables that show a high degree of variation. We can pick out these predictors from their histograms. Those that are concentrated at certain values may not give us the insights into predicting the incidence of COVID-19 in different countries. For example, aquatic products and their fat contents don't exhibit strong variation. This makes sense since some countries may not have aquatic products. Though this variable may help to predict COVID 19 incidence in countries that do consume aquatic products, it may pick up dynamics in non-aquatic consuming countries that do not exist in the data.
 
-We also want to remove variables that may contain similar information to others, such as "Sugar Crops" and "Sugar Sweetners". Our main response variables are COVID-19 deaths and confirmed cases. These represent proportions of a country's total population.  
+We also want to remove variables that may contain similar information to others, such as "Sugar Crops" and "Sugar Sweetners". Our main response variables are COVID-19 deaths and confirmed cases. These represent proportions of a country's total population.
 
 ```{r}
 # Keep Variables That We'd Like to Study 
@@ -96,9 +92,10 @@ nutrition <- na.omit(nutrition)
 nrow(nutrition) 
 ```
 
-Now that our data set is largely cleaned, removing for predictors we are not interested in and adjusting for empty values, we can now look into feature selection methods. The main one we will use is the Boruta algorithm which uses random forests to pick out a subset of best predictors. We will assume that Covid-19 deaths is our response variable. 
+Now that our data set is largely cleaned, removing for predictors we are not interested in and adjusting for empty values, we can now look into feature selection methods. The main one we will use is the Boruta algorithm which uses random forests to pick out a subset of best predictors. We will assume that Covid-19 deaths is our response variable.
 
 # Feature Selection
+
 ```{r, echo = FALSE}
 # Boruta Algorithm
 library(Boruta)
@@ -112,11 +109,12 @@ boruta_covid <- Boruta(Deaths~.-Confirmed, data = nutrition, doTrace = 2,
 plot(boruta_covid, main = "Boruta Algorithm Feature Selection", las = 2)
 ```
 
-According to our Boruta plot, ten out of the twenty three predictors we shortlisted are significant in explaining and predicting COVID-19 deaths. Moving forward, we'll be using these 10 predictors and applying specific transformations of them (splines, polynomials) to predict COVID-19 deaths. 
+According to our Boruta plot, ten out of the twenty three predictors we shortlisted are significant in explaining and predicting COVID-19 deaths. Moving forward, we'll be using these 10 predictors and applying specific transformations of them (splines, polynomials) to predict COVID-19 deaths.
 
 Here are the best predictors according to Boruta: "Stimulants", "Pulses", "Vegetable.Oils", "Miscellaneous", "Undernourished", "Milk...Excluding.Butter", "Fish..Seafood", "Vegetal.Products", "Animal.Products", "Animal.fats", "Eggs", "Obesity".
 
 # Relationship Between Response Variable & Chosen Predictors
+
 ```{r}
 # Keep Variables We Want to Model
 nutrition_cln <- nutrition %>% select(-c("Fruits...Excluding.Wine","Spices",
@@ -135,6 +133,7 @@ for (variable in names(nutrition_cln)){
 ```
 
 # Creating folds for all Cross-Validation Testing
+
 ```{r}
 library(caret)
 set.seed(123)
@@ -142,14 +141,14 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 ```
 
 # Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
+
 ```{r}
 
 ```
 
-
 # Splines: Arif (Leave Descriptions Until Last, Just Write Code)
 
-Since we have many predictors to account for, I'll be optimizing each predictor against our response variable (COVID-19 deaths) individually and separately. In order to fit splines to our data, We'll be using a matrix of spline functions, or basis functions (bs()). Though we could individually set knots for each variable and test its general performance, we do not have a strong understanding of nutritional theory. Thus, instead, we'll use cross-validation techniques to optimize the degrees of freedom for each predictor and their corresponding basis functions. The degrees of freedom take into account the best knots for the predictors. Instead of mixing and matching different predictors and their basis functions, we'll be working on each predictor's basis functions individually, then compiling the best based on cross-validation performance. 
+Since we have many predictors to account for, I'll be optimizing each predictor against our response variable (COVID-19 deaths) individually and separately. In order to fit splines to our data, We'll be using a matrix of spline functions, or basis functions (bs()). Though we could individually set knots for each variable and test its general performance, we do not have a strong understanding of nutritional theory. Thus, instead, we'll use cross-validation techniques to optimize the degrees of freedom for each predictor and their corresponding basis functions. The degrees of freedom take into account the best knots for the predictors. Instead of mixing and matching different predictors and their basis functions, we'll be working on each predictor's basis functions individually, then compiling the best based on cross-validation performance.
 
 ```{r}
 # Cross Validation for Each Variable Using Splines and Basis Functions 
@@ -550,7 +549,7 @@ variable_list[["Undernourished"]] <- c(cv_error_df[which.min(cv_error_df$Means),
 print(variable_list) # Natural Splines Fit for Individual Variables
 ```
 
-Looking at our full list of variables and their natural spline performance, we see that the natural splines that returned the lowest MSE scores were: Obesity, Undernourished, Eggs, Animal Products, Vegetal Products, and Animal Fats. All of these natural splines produced an MSE score of below 0.002. Moreover, we ran for loops that tested degrees of freedom between 4 and 15 and surprisingly most of our optimal degrees of freedom for each individual variable are below 6. This in theory reduces potential overfitting in testing sets. Moving forward, we will consider potential combinations of these splines, emphasizing the variables that performed the best in our (natural spline) cross validation exercise. In order to figure out which combinations of variables are optimal, we'll be using a cross-validation approach using the same folds set before. We'll be comparing MSE and AIC/BIC scores. Though there may be more robust algorithms that can optimize a variety of combinations of variables, we'll be using an approach similar to forward step-wise selection. In this version, we'll be adding the best natural spline variables in order of their MSE performance from the previous section. 
+Looking at our full list of variables and their natural spline performance, we see that the natural splines that returned the lowest MSE scores were: Obesity, Undernourished, Eggs, Animal Products, Vegetal Products, and Animal Fats. All of these natural splines produced an MSE score of below 0.002. Moreover, we ran for loops that tested degrees of freedom between 4 and 15 and surprisingly most of our optimal degrees of freedom for each individual variable are below 6. This in theory reduces potential overfitting in testing sets. Moving forward, we will consider potential combinations of these splines, emphasizing the variables that performed the best in our (natural spline) cross validation exercise. In order to figure out which combinations of variables are optimal, we'll be using a cross-validation approach using the same folds set before. We'll be comparing MSE and AIC/BIC scores. Though there may be more robust algorithms that can optimize a variety of combinations of variables, we'll be using an approach similar to forward step-wise selection. In this version, we'll be adding the best natural spline variables in order of their MSE performance from the previous section.
 
 Order: Obesity, Eggs, Undernourished, Animal Products, Vegetal Products, Animal Fats
 
@@ -758,15 +757,16 @@ mean(bic_vector_ns) #See That These Values Are Not As Optimal As Comparable Mdl2
 print(model_comp_df)
 ```
 
-Taking into account MSE and BIC values, we are left with conflicting conclusions. BIC would favor our first model with a natural spline on obesity. This model has the lowest number of parameters favoring its BIC score. In terms of MSE, it does not perform as well as model 2 which takes a natural spline of obesity and egg fat content. Out of the 6 models we tested (using a quasi-forward step selection method), model 2 returned the lowest MSE score. Since we are most concerned about prediction accuracy over parsimony (though model 2 is still quite parsimonious), our natural spline exercise point towards using a natural spline regression of two predictors: obesity and eggs with knot degrees of freedom of 4 for both. We ran a sanity check by creating a model with obesity (by far the best natural spline predictor) and another strong natural spline predictor (animal fats). This sanity check was to see if there were other possible and more optimal predictor interactions outside of our forward stepwise method. The MSE and BIC for that two predictor model was not as optimal as its forward stepwise counterpart model 2 with obesity and egg as predictors. Moving forward, we'll look into generalized additive methods. 
+Taking into account MSE and BIC values, we are left with conflicting conclusions. BIC would favor our first model with a natural spline on obesity. This model has the lowest number of parameters favoring its BIC score. In terms of MSE, it does not perform as well as model 2 which takes a natural spline of obesity and egg fat content. Out of the 6 models we tested (using a quasi-forward step selection method), model 2 returned the lowest MSE score. Since we are most concerned about prediction accuracy over parsimony (though model 2 is still quite parsimonious), our natural spline exercise point towards using a natural spline regression of two predictors: obesity and eggs with knot degrees of freedom of 4 for both. We ran a sanity check by creating a model with obesity (by far the best natural spline predictor) and another strong natural spline predictor (animal fats). This sanity check was to see if there were other possible and more optimal predictor interactions outside of our forward stepwise method. The MSE and BIC for that two predictor model was not as optimal as its forward stepwise counterpart model 2 with obesity and egg as predictors. Moving forward, we'll look into generalized additive methods.
 
 # GAM: Jon (Leave Descriptions Until Last, Just Write Code)
+
 ```{r}
 library(gam)
 ```
 
+GAM 1 CV
 
-GAM 1 CV 
 ```{r}
 # Empty vector for CV preds
 gam1_preds <- numeric(length(nutrition_cln$Deaths))
@@ -790,8 +790,8 @@ gam1_cv_mse
 
 ```
 
+GAM 2 CV
 
-GAM 2 CV 
 ```{r}
 # Empty vector for CV preds
 gam2_preds <- numeric(length(nutrition_cln$Deaths))
@@ -816,6 +816,7 @@ gam2_cv_mse
 ```
 
 GAM 3 CV
+
 ```{r}
 # Empty vector for CV preds
 gam3_preds <- numeric(length(nutrition_cln$Deaths))
@@ -840,7 +841,40 @@ gam3_cv_mse
 
 ```
 
+# Part 2
+
+# Read and Clean Part II Data
 ```{r}
+# Read Data into Environment
+credit <- read.csv("credit_classification.csv", sep = ",",
+                      header = TRUE)
+head(credit)
+
+# See Variable Names
+names(credit)
+
+
+# Check for NA vals
+is.na(credit)
+
+has_na <- any(is.na(credit))
+
+if (has_na) {
+  cat("not clean")
+} else {
+  cat("clean")
+}
+
+# Omit NA vals
+credit_cln <- na.omit(credit)
+
+# Check again for NA vals on cleaned data
+has_na_2 <- any(is.na(credit_cln))
+
+if (has_na_2) {
+  cat("not clean")
+} else {
+  cat("clean")
+}
 
 ```
-
