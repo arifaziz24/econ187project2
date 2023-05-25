@@ -242,9 +242,6 @@ for (variable in names(variable_list)) {
     print(paste("MSE:", mse))
   }
 }
-
-
-
 ```
 
 //// will remove this ////Looking at the piecewise polynomial model of different combinations of the predictors againt the variable "Deaths" we can see that of the independent predictors used, "Undernourished" had the lowest MSE of 0.001729 and an optimal degree of freedom being 4. The independent predictor with the highest MSE was the "Fish..Seafood" with an MSE of 0.173299 and a degree of freedom of 4. Looking at the combinations of predictors we can see that the piecewise polynomial with predictors "Egg"+ "Obesity"+ "Animal.fats" has the lowest MSE of 0.001589 and a degree of freedom of 4, appearing to be the best model of the combinations provided. /////
@@ -789,7 +786,7 @@ for (i in 1:length(folds)){
   
   # Model Fit & Predict on Testing Data
   model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4)+ns(Undernourished,4)+
-                ns(Animal.Products,5)+ns(), data = nutrition_cln, subset = train_index)
+                ns(Animal.Products,5), data = nutrition_cln, subset = train_index)
   predictions <- predict(model, newdata = nutrition_test) 
   
   # MSE Calculation & Input into Vector
