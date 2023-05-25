@@ -144,18 +144,59 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 
 # Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
 
+
 ```{r}
-# Empty List to Store Performance Scores for Each Predictor
-variable_list <- list()
+variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
 
-# Variables to process
-variables <- c("Stimulants", "Pulses", "Vegetable.Oils", "Miscellaneous", "Undernourished",
-               "Milk...Excluding.Butter", "Fish..Seafood", "Vegetal.Products", "Animal.Products",
-               "Animal.fats", "Eggs", "Obesity")
+# Define the combinations of predictors
+predictor_combinations <- list(
+  c("Stimulants"),
+  c("Pulses"),
+  c("Vegetable.Oils"),
+  c("Miscellaneous"),
+  c("Undernourished"),
+  c("Milk...Excluding.Butter"),
+  c("Fish..Seafood"),
+  c("Vegetal.Products"),
+  c("Animal.Products"),
+  c("Animal.fats"),
+  c("Eggs"),
+  c("Obesity"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished"),
+  c("Vegetal.Products", "Animal.Products"),
+  c("Vegetal.Products", "Undernourished"),
+  c("Animal.Products", "Undernourished"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Stimulants"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Pulses"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Vegetable.Oils"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Miscellaneous"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Milk...Excluding.Butter"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Fish..Seafood"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Eggs"),
+  c("Vegetal.Products", "Animal.Products", "Undernourished", "Obesity"),
+  c("Vegetal.Products", "Animal.Products", "Stimulants"),
+  c("Vegetal.Products", "Animal.Products", "Pulses"),
+  c("Vegetal.Products", "Animal.Products", "Vegetable.Oils"),
+  c("Vegetal.Products", "Animal.Products", "Miscellaneous"),
+  c("Vegetal.Products", "Animal.Products", "Milk...Excluding.Butter"),
+  c("Vegetal.Products", "Animal.Products", "Fish..Seafood"),
+  c("Vegetal.Products", "Animal.Products", "Eggs"),
+  c("Vegetal.Products", "Animal.Products", "Obesity"),
+  c("Vegetal.Products", "Undernourished", "Stimulants"),
+  c("Vegetal.Products", "Undernourished", "Pulses"),
+  c("Vegetal.Products", "Undernourished", "Vegetable.Oils"),
+  c("Vegetal.Products", "Undernourished", "Miscellaneous"),
+  c("Vegetal.Products", "Undernourished", "Milk...Excluding.Butter", "Fish..Seafood"),
+  c("Vegetal.Products", "Undernourished", "Milk...Excluding.Butter", "Eggs"),
+  c("Vegetal.Products", "Undernourished", "Milk...Excluding.Butter", "Obesity"),
+  c("Vegetal.Products", "Undernourished", "Fish..Seafood", "Eggs"),
+  c("Vegetal.Products", "Undernourished", "Fish..Seafood", "Obesity"),
+  c("Vegetal.Products", "Undernourished", "Eggs", "Obesity")
+)
 
-# Perform calculations for each variable
-for (variable in variables) {
-  cv_num_vector <- 4:15 # First Column of Data to Represent Degrees of Freedom
+# Iterate over predictor combinations
+for (predictors in predictor_combinations) {
+  cv_num_vector <- 1:4 # First Column of Data to Represent Degrees of Freedom
   cv_error_df <- data.frame(cv_num_vector) # Put Column into Data Frame
   emptyvector <- vector() # Vector for Mean Squared Error Scores
   
@@ -164,8 +205,9 @@ for (variable in variables) {
     test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
     nutrition_test <- nutrition_cln[test_index,]
     
-    for (j in 4:15) {
-      formula <- paste("Deaths ~ poly(", variable, ", degree = ", j, ", raw = TRUE)", sep = "")
+    for (j in 1:4) {
+      formula <- paste("Deaths ~ poly(", paste(predictors, collapse = "+"), 
+                       ", degree = ", j, ", raw = TRUE)", sep = "")
       fit <- lm(formula, data = nutrition_cln, subset = train_index) # Fit Piecewise Polynomial with specified degree
       prediction <- predict(fit, newdata = nutrition_test) # Predict on Test Set
       mse_score <- mean((nutrition_test$Deaths - prediction)^2) # MSE Calculation
@@ -182,48 +224,65 @@ for (variable in variables) {
   print(cv_error_df)
   
   # Store results in variable_list
-  variable_list[[variable]] <- c(cv_error_df[which.min(cv_error_df$Means), 1], min(cv_error_df$Means))
+  variable_list[[paste(predictors, collapse = "_")]] <- c(cv_error_df[which.min(cv_error_df$Means), 1], min(cv_error_df$Means))
 }
 
 # Print the results
 print(variable_list)
 
+# Find the top 3 minimum MSE values
+top3_min_mse <- sort(sapply(variable_list, function(x) x[2]))[1:3]
 
-```
-
-```{r}
-variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
-
-### Animal Products Test ###
-cv_num_vector <- 4:15 # First Column of Data to Represent Degrees of Freedom
-cv_error_df <- data.frame(cv_num_vector) # Put Column into Data Frame
-emptyvector <- vector() # Vector for Mean Squared Error Scores
-
-for (i in 1:length(folds)){
-  train_index <- folds[[i]]
-  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
-  nutrition_test <- nutrition_cln[test_index,]
-  for (j in 4:15){
-    fit <- lm(Deaths ~ poly(Animal.Products, degree = j, raw = TRUE), data = nutrition_cln, 
-              subset = train_index) # Fit Piecewise Polynomial with specified degree
-    prediction <- predict(fit, newdata = nutrition_test) # Predict on Test Set
-    mse_score <- mean((nutrition_test$Deaths - prediction)^2) # MSE Calculation
-    emptyvector[j-3] <- round(mse_score, 6)
+# Print the elements of variable_list where MSE is in the top 3 minimum values
+for (variable in names(variable_list)) {
+  mse <- variable_list[[variable]][2]
+  if (mse %in% top3_min_mse) {
+    print(paste("Variable:", variable))
+    print(paste("Degree of Freedom:", variable_list[[variable]][1]))
+    print(paste("MSE:", mse))
   }
-  cv_error_df <- cbind(cv_error_df, emptyvector) # Add MSE from DF into Data Frame
-  emptyvector <- vector() # Empty Vector
 }
 
-# Clean Data Frame & Return Values to Main Data Frame
-colnames(cv_error_df) <- c("Degrees of Freedom", "Fold 1", "Fold 2", "Fold 3", 
-                           "Fold 4", "Fold 5")
-cv_error_df$Means <- round(rowMeans(cv_error_df[, 2:6]), 6)
-print(cv_error_df)
-print(paste0("Minimum Degree of Freedom for Animal.Products Piecewise Polynomial: ",
-             cv_error_df[which.min(cv_error_df$Means), 1]))
-variable_list[["Animal.Products"]] <- c(cv_error_df[which.min(cv_error_df$Means), 1],
-                                        min(cv_error_df$Means))
+
+
 ```
+
+//// will remove this ////Looking at the piecewise polynomial model of different combinations of the predictors againt the variable "Deaths" we can see that of the independent predictors used, "Undernourished" had the lowest MSE of 0.001729 and an optimal degree of freedom being 4. The independent predictor with the highest MSE was the "Fish..Seafood" with an MSE of 0.173299 and a degree of freedom of 4. Looking at the combinations of predictors we can see that the piecewise polynomial with predictors "Egg"+ "Obesity"+ "Animal.fats" has the lowest MSE of 0.001589 and a degree of freedom of 4, appearing to be the best model of the combinations provided. /////
+
+Top individual Predictors
+Vegetal.Products
+Degrees of Freedom: 1
+MSE: 0.001691
+
+Animal.Products
+Degrees of Freedom: 1
+MSE: 0.001691
+
+Undernourished
+Degrees of Freedom: 1
+MSE: 0.001729
+
+Top combined Predictor
+[1] "Variable: Vegetal.Products_Animal.Products_Undernourished_Fish..Seafood"
+[1] "Degree of Freedom: 1"
+[1] "MSE: 0.001663"
+
+
+
+Top 3 overall models: 
+
+[1] "Variable: Vegetal.Products"
+[1] "Degree of Freedom: 1"
+[1] "MSE: 0.001691"
+
+[1] "Variable: Animal.Products"
+[1] "Degree of Freedom: 1"
+[1] "MSE: 0.001691"
+
+[1] "Variable: Vegetal.Products_Animal.Products_Undernourished_Fish..Seafood"
+[1] "Degree of Freedom: 1"
+[1] "MSE: 0.001663"
+> 
 
 # Splines: Arif (Leave Descriptions Until Last, Just Write Code)
 
@@ -984,35 +1043,6 @@ library(tree)
 # text(class.tree.model, cex=.75)
 ```
 
-
-# Piecewise Polynomial 
-
-```{r}
-library(ggplot2)
-
-y <- nutrition$Obesity
-X <- nutrition$Undernourished
-X <- as.numeric(as.character(X))
-missing_rows <- is.na(X) | is.na(y) 
-y <- y[!missing_rows]
-X <- X[!missing_rows]
-
-breakpoints <- seq(10, 50, by = 10)  # Set the breakpoints increment and range
-pred_terms <- lapply(breakpoints, function(b) I((X - b) * (X >= b)))
-
-pred7 <- predict(lm(y ~ X + Reduce("+", pred_terms), data = nutrition))
-
-# Create a dataframe with the clean variables
-pred_df <- data.frame(X = X, pred7 = pred7, y = y)
-
-tri.age.plot <- ggplot(pred_df, aes(x = X, y = y)) +
-  geom_point(alpha = 0.55, color = "black") +
-  theme_minimal()
-
-tri.age.plot +
-  geom_line(data = pred_df, aes(y = pred7), size = 1, col = "blue")
-
-```
 
 
 
