@@ -1100,10 +1100,16 @@ for (variable in remainder){
 
 In the analysis of our variables, we did not look into Room.Type and Shared.Room variables since they are both captured in the indicator variable Private.Room. We won't use the attraction and restaurant index since their distributions are not normally distributed. The data set has normally distributed values for those features. Before we run feature selection algorithms - in order to make our dataset even more lean (less features) - we will have to convert some of our features (such as Private.Room) into indicators. 
 
-We'd also like to create a classifier variable out of guest satisfaction. Interestingly, the median guest satisfaction score for the AirBnB homes in our data aset is 95 out of 100. Empirically, this makes sense since AirBnB customers (just like )
+We'd also like to create a classifier variable out of guest satisfaction. Interestingly, the median guest satisfaction score for the AirBnB homes in our data aset is 95 out of 100. Empirically, this makes sense since AirBnB customers (just like Uber riders and other consumers in the gig economy) are naturally inclined to give their hosts a good rating - even if the service is not quite up to par. This median threshold will thus be a separating point between "good" AirBnBs and excellent AirBnBs. We'll create a new indicator/classifier variable to highlight AirBnBs above and below the median. 
 
 ```{r}
 # Convert Variables into Indicators (1 = Yes, 0 = No)
+
+# Classifier Variable: Guest Satisfaction, r = response variable
+airbnb$Guest.Satisfaction.r <- ifelse(airbnb$Guest.Satisfaction > 
+                                        median(airbnb$Guest.Satisfaction), 
+                                      1,0) 
+summary(airbnb$Guest.Satisfaction.r) # 47% are 1s
 
 # Private Room into Indicator
 airbnb$Private.Room.ind <- ifelse(airbnb$Private.Room == "True", 1,0)
@@ -1113,16 +1119,28 @@ table(airbnb$Private.Room)/length(airbnb$Private.Room) # Yes, they match
 # Superhost into Indicator
 airbnb$Superhost.ind <- ifelse(airbnb$Superhost == "True", 1,0)
 summary(airbnb$Superhost.ind) 
-table(airbnb$Superhost)/length(airbnb$Superhost) 
+table(airbnb$Superhost)/length(airbnb$Superhost)
+```
 
-# Turn Guest Satisfaction into Indicator Variable
-
+## Labelling Data Sets for Each of Our Two Problems
+```{r}
 # Use Dplyr To Remove Features We Won't Use 
 library(dplyr)
-airbnb.cln <- airbnb %>% select(-c("City", "Day","Room.Type",
-                                  "Private.Room","Superhost", "Shared.Room",
-                                   "Attraction.Index", "Restraunt.Index"))
-head(airbnb.cln) # Check to see if all variables we need are in  
+
+# Data Set for the Regression Problem, R = regression
+airbnb.cln.r <- airbnb %>% select(-c("City", "Day","Room.Type", "Shared.Room",
+                                     "Private.Room", "Superhost", "Guest.Satisfaction.r",
+                                   "Attraction.Index", "Restraunt.Index")) 
+head(airbnb.cln.r)
+
+# Data set for Classification Problem (Guest Satisfaction As Response), C = class
+airbnb.cln.c <- airbnb %>% select(-c("City", "Day","Room.Type", "Shared.Room",
+                                     "Private.Room", "Superhost", "Guest.Satisfaction",
+                                   "Attraction.Index", "Restraunt.Index")) 
+
+
+head(airbnb.cln.c) # Check to see if all variables we need are in  
+
 ```
 
 
