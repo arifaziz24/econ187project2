@@ -1165,6 +1165,15 @@ plot(boruta_airbnb_class, las = 2, xlab = "", main = "Boruta Algorithm for Class
 boruta_airbnb_class
 ```
 
+## Create Folds 
+```{r}
+set.seed(1209745)
+library(caret)
+Fold <- createFolds(airbnb.cln.r$Price, k = 5, returnTrain = TRUE) # Train Index 
+
+# See that this fold can also be used for our classification data set
+head(airbnb.cln.c[Fold[[2]],])
+```
 
 
 
