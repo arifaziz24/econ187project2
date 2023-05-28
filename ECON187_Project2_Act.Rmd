@@ -896,85 +896,162 @@ Taking into account MSE and BIC values, we are left with conflicting conclusions
 
 # GAM: Jon (Leave Descriptions Until Last, Just Write Code)
 
+
+Using the insights from the previous two sections, we now look into possible combinations of different parameter transformations. We are using Generalized additive models to do so, and will test a variety of different combinations of splines and polynomial transformations to see if they can out perform any of the splines or polynomial models on their own. 
 ```{r}
 library(gam)
 ```
 
 GAM 1 CV
-
 ```{r}
 # Empty vector for CV preds
 gam1_preds <- numeric(length(nutrition_cln$Deaths))
 
+# Empty Data Frame
+Degree <- 1:4
+gam1_empty_df <- data.frame(Degree)
+
 # CV loop
 for (i in 1:length(folds)) {
   train_index <- folds[[i]]
   test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam1_nutrition_test <- nutrition_cln[test_index,]
+  gam1_cv_mse_vector <- vector()
   
+  for (j in 1:4) {
   # Define GAM
-  gam1 <- gam(Deaths~ s(Eggs) + s(Obesity), data = nutrition_cln, subset = train_index)
+  gam1 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4)+ poly(Animal.fats, j), 
+              data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam1_test_preds <- predict(gam1, newdata = nutrition_cln[test_index, ])
-  gam1_preds[test_index] <- gam1_test_preds
+  
+  # MSE Score Calculation
+  gam1_cv_mse_vector[j] <- mean((gam1_test_preds - gam1_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam1_empty_df <- cbind(gam1_empty_df, gam1_cv_mse_vector)
 }
 
-# CV MSE
-gam1_cv_mse <- mean((gam1_preds - nutrition_cln$Deaths)^2)
-gam1_cv_mse
+rowMeans(gam1_empty_df[,-1])
+
 
 ```
+Using the two best splines from the previous section, a natural spline on Obesity and a natural spline on Eggs, we test four possible GAMs that add both of those splines with the variable Animal.fats, and vary the polynomial degree of Animal.fats from 1 to 4. The cross validation suggests that the GAM including both splines and Animal.fats of degree 1 is the best performer so far. 
+
 
 GAM 2 CV
-
 ```{r}
 # Empty vector for CV preds
 gam2_preds <- numeric(length(nutrition_cln$Deaths))
 
+# Empty Data Frame
+Degree <- 1:4
+gam2_empty_df <- data.frame(Degree)
+
 # CV loop
 for (i in 1:length(folds)) {
   train_index <- folds[[i]]
   test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam2_nutrition_test <- nutrition_cln[test_index,]
+  gam2_cv_mse_vector <- vector()
   
+  for (j in 1:4) {
   # Define GAM
-  gam2 <- gam(Deaths~ s(Obesity) + poly(Eggs, 4), data = nutrition_cln, subset = train_index)
+  gam2 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Obesity, j), 
+              data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam2_test_preds <- predict(gam2, newdata = nutrition_cln[test_index, ])
   
-  gam2_preds[test_index] <- gam2_test_preds
+  # MSE Score Calculation
+  gam2_cv_mse_vector[j] <- mean((gam2_test_preds - gam2_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam2_empty_df <- cbind(gam2_empty_df, gam2_cv_mse_vector)
 }
 
-# CV MSE
-gam2_cv_mse <- mean((gam2_preds - nutrition_cln$Deaths)^2)
-gam2_cv_mse
+rowMeans(gam2_empty_df[,-1])
+
 ```
+This model sees improvements in MSE from the previous model, but the higher degree polynomials on Obesity only worsen the model. The addition of Obesity using degree 1 is the best of the four new models and is identical to the MSE of the model that uses the two natural splines alone. 
+
 
 GAM 3 CV
-
 ```{r}
 # Empty vector for CV preds
 gam3_preds <- numeric(length(nutrition_cln$Deaths))
+
+# Empty Data Frame
+Degree <- 1:4
+gam3_empty_df <- data.frame(Degree)
 
 # CV loop
 for (i in 1:length(folds)) {
   train_index <- folds[[i]]
   test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam3_nutrition_test <- nutrition_cln[test_index,]
+  gam3_cv_mse_vector <- vector()
   
+  for (j in 1:4) {
   # Define GAM
-  gam3 <- gam(Deaths~ poly(Eggs, 3) + Obesity, data = nutrition_cln, subset = train_index)
+  gam3 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Eggs, j), 
+              data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam3_test_preds <- predict(gam3, newdata = nutrition_cln[test_index, ])
   
-  gam3_preds[test_index] <- gam3_test_preds
+  # MSE Score Calculation
+  gam3_cv_mse_vector[j] <- mean((gam3_test_preds - gam3_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam3_empty_df <- cbind(gam3_empty_df, gam3_cv_mse_vector)
 }
 
-# CV MSE
-gam3_cv_mse <- mean((gam3_preds - nutrition_cln$Deaths)^2)
-gam3_cv_mse
-
+rowMeans(gam3_empty_df[,-1])
 ```
+Once again, we see the higher degree polynomials on Eggs only worsen the model. The addition of Eggs using degree 1 is the best of the four new models and is identical to the MSE of the model that uses the two natural splines alone.
+
+
+GAM 4 CV
+```{r}
+# Empty vector for CV preds
+gam4_preds <- numeric(length(nutrition_cln$Deaths))
+
+# Empty Data Frame
+Degree <- 1:4
+gam4_empty_df <- data.frame(Degree)
+
+# CV loop
+for (i in 1:length(folds)) {
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam4_nutrition_test <- nutrition_cln[test_index,]
+  gam4_cv_mse_vector <- vector()
+  
+  for (j in 1:4) {
+  # Define GAM
+  gam4 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Vegetal.Products, j), 
+              data = nutrition_cln, subset = train_index)
+
+  # Test set preds
+  gam4_test_preds <- predict(gam4, newdata = nutrition_cln[test_index, ])
+  
+  # MSE Score Calculation
+  gam4_cv_mse_vector[j] <- mean((gam4_test_preds - gam4_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam4_empty_df <- cbind(gam4_empty_df, gam4_cv_mse_vector)
+}
+
+rowMeans(gam4_empty_df[,-1])
+```
+Our final set of GAMs uses the same 2 natural splines as before and tests Vegetable products of degrees 1 through 4. This model reports an MSE of 0.001517956 for the fourth degree transformation of Vegetable.Products, making it the best performing model so far out of all of the Polynomials, Splines, and GAMS. The Final model is given by: gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Vegetable.Products, j))
+
 
 # Part II: Tree-Based Models
 
