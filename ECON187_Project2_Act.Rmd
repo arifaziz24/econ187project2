@@ -1057,18 +1057,69 @@ Our final set of GAMs uses the same 2 natural splines as before and tests Vegeta
 
 ## Introduction
 
-In this part of the project, we will run tree-based models to predict AirBnB prices per night as well as guest satisfaction. The data set consists of over fifty thousand observations of AirBnBs around the world, in cities like Amsterdam and Vienna. We will run a variety of classification and regression trees, including random forests and boosting methods. 
+In this part of the project, we will run tree-based models to predict AirBnB prices per night as well as guest satisfaction. The data set consists of over fifty thousand observations of AirBnBs around the world, in cities like Amsterdam and Vienna. We will run a variety of classification and regression trees, including random forests and boosting methods. Before running our models, we'll briefly analyze features of interest in our AirBnB data and clean out some of them. 
 
-## Clean Data
+## Analyze & Clean Data
 ```{r}
 # Load Data
 airbnb <- read.csv("Aemf1.csv", header = TRUE, sep = ",")
 head(airbnb) 
+names(airbnb)
 
-# Plot Histograms
+# AirBnB Price Analysis
+hist(airbnb$Price, breaks = 50, main = "AirBnB Prices", xlab = "AirBnB Prices") 
+summary(airbnb$Price)
+head(airbnb$Price[order(airbnb$Price, decreasing = TRUE)], 20) # Top 20 Prices 
+
+# Private Room Analysis: Indicator Variable for Private Rooms (1 = Yes, 0 = No)
+table(airbnb$Private.Room)/length(airbnb$Private.Room) # 70 - 30 Balance
+
+# Person Capacity Analysis
+hist(airbnb$Person.Capacity, breaks = 10, main = "AirBnB Person Capacity", 
+     xlab = "AirBnB Prices") 
+summary(airbnb$Person.Capacity) 
+
+# Superhost (Awarded to Top Rated Hosts) Capacity Analysis
+table(airbnb$Superhost)/length(airbnb$Superhost) # 70 - 30 Balance
+
+# Multiple Rooms Analysis
+table(airbnb$Multiple.Rooms)/length(airbnb$Multiple.Rooms) # 70 - 30 Balance
+
+# Business Analysis
+table(airbnb$Business)/length(airbnb$Business) 
+
+# For Remainder Quantitative Variables Use For Loop of Histograms
+remainder <- c("Cleanliness.Rating", "Guest.Satisfaction", "Bedrooms",                    "City.Center..km.", "Metro.Distance..km.", "Attraction.Index", "Normalised.Attraction.Index", "Restraunt.Index", "Normalised.Restraunt.Index")
+
+# Plot Histograms for Remainder Variables
+for (variable in remainder){
+  print(hist(airbnb[[variable]], breaks = 20, main = variable, xlab = variable))
+  print(summary(variable))
+}
 ```
 
+In the analysis of our variables, we did not look into Room.Type and Shared.Room variables since they are both captured in the indicator variable Private.Room. We won't use the attraction and restaurant index since their distributions are not normally distributed. The data set has normally distributed values for those features. Before we run feature selection algorithms - in order to make our dataset even more lean (less features) - we will have to convert some of our features (such as Private.Room) into indicators. 
 
+```{r}
+# Convert Variables into Indicators (1 = Yes, 0 = No)
+
+# Private Room into Indicator
+airbnb$Private.Room.ind <- ifelse(airbnb$Private.Room == "True", 1,0)
+summary(airbnb$Private.Room.ind) # Check to see if proportions are right
+table(airbnb$Private.Room)/length(airbnb$Private.Room) # Yes, they match
+
+# Superhost into Indicator
+airbnb$Superhost.ind <- ifelse(airbnb$Superhost == "True", 1,0)
+summary(airbnb$Superhost.ind) 
+table(airbnb$Superhost)/length(airbnb$Superhost)
+
+# Use Dplyr To Remove Features We Won't Use 
+library(dplyr)
+airbnb.cln <- airbnb %>% select(-c("City", "Day","Room.Type",
+                                  "Private.Room","Superhost", "Shared.Room",
+                                   "Attraction.Index", "Restraunt.Index"))
+head(airbnb.cln) # Check to see if all variables we need are in  
+```
 
 
 
