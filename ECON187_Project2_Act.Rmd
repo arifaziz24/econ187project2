@@ -1147,7 +1147,6 @@ any(is.na(airbnb.cln.r))
 ```
 
 ## Feature Selection & Additional Cleaning
-
 ```{r}
 # Boruta Algorithm
 library(Boruta)
