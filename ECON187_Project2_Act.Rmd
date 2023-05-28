@@ -1050,7 +1050,7 @@ for (i in 1:length(folds)) {
 
 rowMeans(gam4_empty_df[,-1])
 ```
-Our final set of GAMs uses the same 2 natural splines as before and tests Vegetable products of degrees 1 through 4. This model reports an MSE of 0.001517956 for the fourth degree transformation of Vegetable.Products, making it the best performing model so far out of all of the Polynomials, Splines, and GAMS. The Final model is given by: gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Vegetal.Products, j))
+Our final set of GAMs uses the same 2 natural splines as before and tests Vegetable products of degrees 1 through 4. This model reports an MSE of 0.001517956 for the fourth degree transformation of Vegetable.Products, making it the best performing model so far out of all of the Polynomials, Splines, and GAMS. The Final model is given by: gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Vegetable.Products, j))
 
 
 # Part II: Tree-Based Models
