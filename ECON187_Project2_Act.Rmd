@@ -7,11 +7,13 @@ output: pdf_document
 
 #Notes #pull #add/save #commit #pull(to get someone elses)/push (to give yours to everyone else)
 
-# Brief Introduction to Part I:
+# Part I: Non-Linear Models
+
+## Introduction
 
 The data we found explores the relationship between the fat content of multiple different food items against the incidence and prevalence of COVID 19. The data is aggregated from 170 countries (170 observations), and we plan to use a variety of non-linear techniques to create a model that predicts COVID contraction rates from aggregated nutrition variables (pertaining to food fat content).
 
-# Read & Clean Covid Data:
+## Read & Clean Covid Data:
 ```{r}
 # Clear Environment:
 rm(list = ls())
@@ -94,7 +96,7 @@ nrow(nutrition)
 
 Now that our data set is largely cleaned, removing for predictors we are not interested in and adjusting for empty values, we can now look into feature selection methods. The main one we will use is the Boruta algorithm which uses random forests to pick out a subset of best predictors. We will assume that Covid-19 deaths is our response variable.
 
-# Feature Selection
+## Feature Selection
 
 ```{r, echo = FALSE}
 # Boruta Algorithm
@@ -142,8 +144,7 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 
 ```
 
-# Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
-
+## Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
 
 ```{r}
 variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
@@ -279,9 +280,8 @@ Top 3 overall models:
 [1] "Variable: Vegetal.Products_Animal.Products_Undernourished_Fish..Seafood"
 [1] "Degree of Freedom: 1"
 [1] "MSE: 0.001663"
-> 
 
-# Splines: Arif (Leave Descriptions Until Last, Just Write Code)
+## Splines: Arif (Leave Descriptions Until Last, Just Write Code)
 
 Since we have many predictors to account for, I'll be optimizing each predictor against our response variable (COVID-19 deaths) individually and separately. In order to fit splines to our data, We'll be using a matrix of spline functions, or basis functions (bs()). Though we could individually set knots for each variable and test its general performance, we do not have a strong understanding of nutritional theory. Thus, instead, we'll use cross-validation techniques to optimize the degrees of freedom for each predictor and their corresponding basis functions. The degrees of freedom take into account the best knots for the predictors. Instead of mixing and matching different predictors and their basis functions, we'll be working on each predictor's basis functions individually, then compiling the best based on cross-validation performance.
 
@@ -976,6 +976,20 @@ gam3_cv_mse
 
 ```
 
+# Part II: Tree-Based Models
+
+## Introduction
+
+In this part of the project, we will run tree-based models to predict AirBnB prices per night as well as guest satisfaction. The data set consists of over fifty thousand observations of AirBnBs around the world, in cities like Amsterdam and Vienna. We will run a variety of classification and regression trees, including random forests and boosting methods. 
+
+## Clean Data
+```{r}
+# Load Data
+airbnb <- read.csv("Aemf1.csv", header = TRUE, sep = ",")
+head(airbnb) 
+
+# Plot Histograms
+```
 
 
 
