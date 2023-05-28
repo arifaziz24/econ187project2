@@ -1175,7 +1175,28 @@ Fold <- createFolds(airbnb.cln.r$Price, k = 5, returnTrain = TRUE) # Train Index
 head(airbnb.cln.c[Fold[[2]],])
 ```
 
+# Regression Tree: Jon 
+```{r}
 
+```
+
+
+# Classification Tree: Jon
+```{r}
+
+```
+
+
+# Random Forest: Shanie
+```{r}
+
+```
+
+
+# Boosting: Arif
+```{r}
+
+```
 
 
 
