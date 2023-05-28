@@ -976,69 +976,6 @@ gam3_cv_mse
 
 ```
 
-# Part II
-
-# Read and Clean Part II Data
-```{r}
-# Read Data into Environment
-credit <- read.csv("credit_classification.csv", sep = ",",
-                      header = TRUE)
-head(credit)
-
-# See Variable Names
-names(credit)
-
-
-# Check for NA vals
-is.na(credit)
-
-has_na <- any(is.na(credit))
-
-if (has_na) {
-  cat("not clean")
-} else {
-  cat("clean")
-}
-
-# Omit NA vals
-credit_cln <- na.omit(credit)
-
-# Check again for NA vals on cleaned data
-has_na_2 <- any(is.na(credit_cln))
-
-if (has_na_2) {
-  cat("not clean")
-} else {
-  cat("clean")
-}
-
-credit_cln
-
-```
-
-
-```{r}
-# install.packages("rpart")
-library(rpart)
-# install.packages("tree")
-library(tree)
-```
-
-# Regression Tree
-```{r}
-
-# 
-# reg.tree.model <- tree(Credit_score ~ Monthly_Balance, data=credit_cln)
-# plot(reg.tree.model)
-# text(reg.tree.model, cex=.75)
-```
-
-# Classification Tree
-```{r}
-# class.tree.model <- tree(log(MedianHouseValue) ~ Longitude + Latitude, data=real.estate)
-# plot(class.tree.model)
-# text(class.tree.model, cex=.75)
-```
 
 
 
