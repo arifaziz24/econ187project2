@@ -1141,8 +1141,30 @@ airbnb.cln.c <- airbnb %>% select(-c("City", "Day","Room.Type", "Shared.Room",
 
 head(airbnb.cln.c) # Check to see if all variables we need are in  
 
+# Check for any NA Values
+any(is.na(airbnb.cln.c))
+any(is.na(airbnb.cln.r))
 ```
 
+## Feature Selection & Additional Cleaning
+
+```{r}
+# Boruta Algorithm
+library(Boruta)
+library(randomForest) 
+
+# Boruta for Regression Problem
+boruta_airbnb_reg <- Boruta(Price ~., data = airbnb.cln.r, doTrace = 2, 
+                            randomForest = TRUE)
+plot(boruta_airbnb_reg, las = 2, xlab = "", main = "Boruta Algorithm for Regression Problem") 
+
+# Boruta for Classification Problem
+boruta_airbnb_class <- Boruta(Guest.Satisfaction.r ~., 
+                              data = airbnb.cln.c, doTrace = 2, 
+                              randomForest = TRUE) 
+plot(boruta_airbnb_class, las = 2, xlab = "", main = "Boruta Algorithm for Classification Problem")
+boruta_airbnb_class
+```
 
 
 
