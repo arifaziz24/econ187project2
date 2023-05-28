@@ -1023,6 +1023,8 @@ for (variable in remainder){
 
 In the analysis of our variables, we did not look into Room.Type and Shared.Room variables since they are both captured in the indicator variable Private.Room. We won't use the attraction and restaurant index since their distributions are not normally distributed. The data set has normally distributed values for those features. Before we run feature selection algorithms - in order to make our dataset even more lean (less features) - we will have to convert some of our features (such as Private.Room) into indicators. 
 
+We'd also like to create a classifier variable out of guest satisfaction. Interestingly, the median guest satisfaction score for the AirBnB homes in our data aset is 95 out of 100. Empirically, this makes sense since AirBnB customers (just like )
+
 ```{r}
 # Convert Variables into Indicators (1 = Yes, 0 = No)
 
@@ -1034,7 +1036,9 @@ table(airbnb$Private.Room)/length(airbnb$Private.Room) # Yes, they match
 # Superhost into Indicator
 airbnb$Superhost.ind <- ifelse(airbnb$Superhost == "True", 1,0)
 summary(airbnb$Superhost.ind) 
-table(airbnb$Superhost)/length(airbnb$Superhost)
+table(airbnb$Superhost)/length(airbnb$Superhost) 
+
+# Turn Guest Satisfaction into Indicator Variable
 
 # Use Dplyr To Remove Features We Won't Use 
 library(dplyr)
