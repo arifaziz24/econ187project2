@@ -1193,7 +1193,118 @@ head(airbnb.cln.c[Fold[[2]],])
 ```
 
 
-# Boosting: Arif
+# Boosting: Arif (Classification)
+
+For our boosting models, the main parameter we'd have to tune is the learning or shrinkage parameter. This parameter determines the learning rate of our boosting model. The smaller the value of our shrinkage parameter, gamma, the slower the learning process. Along with gamma, another parameter we could vary is the number of trees (or iterations) within our model. The more trees we use, the better our fit will be. However, this can lead to overfitting. There are a variety of methods to optimize for these parameters. The two main ways we'll be doing this is using **five fold cross-validation** (see the folds we made above) and the **train function** in R. The latter approach is more computationally efficient and will allow us to perform a grid search of the boosting model's parameters. 
+
+### Shrinkage Parameter Search
+```{r, echo = FALSE}
+# For Loop: Five Fold CV to Determine Shrinkage
+set.seed(1209745)
+library(caret)
+library(gbm)
+
+# Train Function with Grid of Parameters
+control <- trainControl(method = "cv", number = 5) # Set Five Fold Cross Validation 
+
+# Create Parameter Grid
+parameters <- expand.grid(n.trees = c(100,200,500,1000,1500),
+                          interaction.depth = c(5,10,15,20,50,100),
+                          shrinkage = c(0,0.1,0.2,0.5,1.0,2.0),
+                          n.minobsinnode = c(5,10,50,100,200))
+
+# Fit A Boosting (GBM) Model 
+features.c <- airbnb.cln.c[, !colnames(airbnb.cln.c) %in% "Guest.Satisfaction.r"]
+
+trained.gbm.fit.c <- train(x = features.c, y = as.factor(airbnb.cln.c$Guest.Satisfaction.r), 
+                           method = "gbm", trControl = control, 
+                           tuneGrid = parameters)
+
+# Five Fold Cross Validation: For Shrinkage Parameter
+
+# Set Up Data Frame and Vectors
+Shrinkage <- c(0,0.1,0.2,0.5,1.0,2.0)
+gbm.df.c.shrink <- data.frame(Shrinkage)
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- folds[[1]]
+  testing.i <- set.diff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.c.test <- airbnb.cln.c[testing.i,]
+  
+  # Empty the Vector Before Each Fold Run
+  gbm.err.c.vec <- vector()
+  
+  for (j in Shrinkage){
+    # Fit the Model
+    gbm.model <- gbm(as.factor(Guest.Satisfaction.r) ~., data = airbnb.cln.c,
+                     subset = training.i, distribution = "bernoulli", 
+                     shrinkage = j)
+    
+    # Predict the Binary Classifier in the Testing Set
+    gbm.predict <- predict(gbm.model, newdata = airbnb.c.test, type = "response") 
+    
+    # Predict the Accuracy of the Model
+    accuracy <- sum(gbm.predict == airbnb.c.test$Guest.Satisfaction.r)/length(airbnb.c.test)
+    
+    # Error Score & Input into Vector (1- Accuracy)
+    error <- 1-accuracy
+    gbm.err.c.vec <- append(gbm.err.c.vec, error)
+  }
+  
+  # Append our Error Vector into Our Data Frame (Memory)
+  gbm.df.c.shrink <- cbind(gbm.df.c.shrink, gbm.err.c.vec)
+  
+  # When the For Loop Runs Again, The Vector Will Be Emptied, Data Frame Maintains
+}
+
+print(gbm.df.c.shrink)
+
+# Five Fold Cross Validation: For Number of Trees
+N.Trees <- c(100,200,500,1000,1500)
+gbm.df.c.ntree <- data.frame(N.Trees)
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- folds[[1]]
+  testing.i <- set.diff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.c.test <- airbnb.cln.c[testing.i,]
+  
+  # Empty the Vector Before Each Fold Run
+  gbm.err.c.vec <- vector()
+  
+  for (j in N.Trees){
+    # Fit the Model
+    gbm.model <- gbm(as.factor(Guest.Satisfaction.r) ~., data = airbnb.cln.c,
+                     subset = training.i, distribution = "bernoulli", 
+                     n.trees = j)
+    
+    # Predict the Binary Classifier in the Testing Set
+    gbm.predict <- predict(gbm.model, newdata = airbnb.c.test, type = "response") 
+    
+    # Predict the Accuracy of the Model
+    accuracy <- sum(gbm.predict == airbnb.c.test$Guest.Satisfaction.r)/length(airbnb.c.test)
+    
+    # Error Score & Input into Vector (1- Accuracy)
+    error <- 1-accuracy
+    gbm.err.c.vec <- append(gbm.err.c.vec, error)
+  }
+  
+  # Append our Error Vector into Our Data Frame (Memory)
+  gbm.df.c.ntree <- cbind(gbm.df.c.ntree, gbm.err.c.vec)
+  
+  # When the For Loop Runs Again, The Vector Will Be Emptied, Data Frame Maintains
+}
+
+print(gbm.df.c.ntree)
+
+# Tune Function
+# tune.gbm.r <- tune(gbm, as.factor(Guest.Satisfaction.r) ~., data = airbnb.cln.c,
+#                    ranges = list(n.trees = c(100,200,500,1000,1500), 
+#                                  shrinkage = c(0,0.1,0.2,0.5,1.0,2.0)))
+```
+
+# Boosting: Arif (Classification)
 ```{r}
 
 ```
