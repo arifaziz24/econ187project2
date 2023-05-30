@@ -1279,7 +1279,45 @@ colnames(gbm.df.c.shrink) <- c("Shrinkage","Fold 1","Fold 2", "Fold 3", "Fold 4"
 print(gbm.df.c.shrink)
 ```
 
-From running five fold cross validation to test a variety of shrinkage parameters, the most optimal one, which returned the lowest CV error score, was a shrinkage parameter value of 0.5. The shrinkage parameter value of 0.2 was a very close second - which matches our findings from the train function we ran above. 
+From running five fold cross validation to test a variety of shrinkage parameters, the most optimal one, which returned the lowest CV error score, was a shrinkage parameter value of 0.5. The shrinkage parameter value of 0.2 was a very close second - which matches our findings from the train function we ran above. Moving forward, we'd recommend using the train function to identify the most optimal parameters. Looking at each parameter individually just helps to confirm our findings through the train function (a form of a sanity check). We'll still run cross validation to see how the model performs across five folds.  
+
+# Most Optimal Boosting Algorithm Model
+```{r}
+# Cross Validation to Check Accuracy of GBM
+gbm.opt.err.vector <- vector() # Vector to Input Errors
+
+for (i in 1:5){
+  # Set Up Folds
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.c.test <- airbnb.cln.c[testing.i,]
+  airbnb.c.train <- airbnb.cln.c[training.i,] 
+  
+  # Fit Model According to "Best Tune" Feature of Trained Function
+  gbm.model <- gbm(Guest.Satisfaction.r ~., data = airbnb.c.train, 
+                     distribution = "bernoulli", 
+                     shrinkage = 0.2, n.trees = 1500, 
+                   interaction.depth = 20, n.minobsinnode = 5) 
+  
+  # Predict Values According to Model
+  gbm.predict <- predict(gbm.model, newdata = airbnb.c.test, type = "response") 
+  
+  # Convert to Binary Classifier
+  gbm.predict.c <- ifelse(gbm.predict > 0.5, 1,0)
+  
+  # Accuracy Score
+  accuracy <- sum(gbm.predict.c == airbnb.c.test$Guest.Satisfaction.r)/nrow(airbnb.c.test)
+  
+  # Error Calculation & Input
+  error.c <- 1-accuracy
+  gbm.opt.err.vector[i] <- error.c
+}
+
+# Print Vector of Errors & Show Mean of CV Error
+print(gbm.opt.err.vector)
+mean(gbm.opt.err.vector)
+```
+
 
 ### Number of Trees Parameter Search (5 Fold Cross-Validation)
 ```{r}
@@ -1329,9 +1367,10 @@ colnames(gbm.df.c.ntree) <- c("Trees","Fold 1","Fold 2", "Fold 3", "Fold 4",
                                "Fold 5", "CV Error Means")
 print(gbm.df.c.ntree)
 ```
+
 After running cross validation on the number of trees, we find that varying them from the levels we specified does not really make a difference on how well the boosting algorithm performs in testing errors. This shows that the boosting algorithm converges to a certain prediction level, with respect to the number of trees. Other parameters, such as shrinkage, may be more optimal in improving accuracy. The average error score for our varying levels of trees is quite high (greater than 75%). 
 
-# Boosting: Arif (Classification)
+# Boosting: Arif (Regression Problem)
 ```{r}
 
 ```
