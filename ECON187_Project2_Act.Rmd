@@ -7,11 +7,13 @@ output: pdf_document
 
 #Notes #pull #add/save #commit #pull(to get someone elses)/push (to give yours to everyone else)
 
-# Brief Introduction to Part I:
+# Part I: Non-Linear Models
+
+## Introduction
 
 The data we found explores the relationship between the fat content of multiple different food items against the incidence and prevalence of COVID 19. The data is aggregated from 170 countries (170 observations), and we plan to use a variety of non-linear techniques to create a model that predicts COVID contraction rates from aggregated nutrition variables (pertaining to food fat content).
 
-# Read & Clean Covid Data:
+## Read & Clean Covid Data:
 ```{r}
 # Clear Environment:
 rm(list = ls())
@@ -94,7 +96,7 @@ nrow(nutrition)
 
 Now that our data set is largely cleaned, removing for predictors we are not interested in and adjusting for empty values, we can now look into feature selection methods. The main one we will use is the Boruta algorithm which uses random forests to pick out a subset of best predictors. We will assume that Covid-19 deaths is our response variable.
 
-# Feature Selection
+## Feature Selection
 
 ```{r, echo = FALSE}
 # Boruta Algorithm
@@ -142,8 +144,7 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 
 ```
 
-# Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
-
+## Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
 
 ```{r}
 variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
@@ -242,9 +243,6 @@ for (variable in names(variable_list)) {
     print(paste("MSE:", mse))
   }
 }
-
-
-
 ```
 
 //// will remove this ////Looking at the piecewise polynomial model of different combinations of the predictors againt the variable "Deaths" we can see that of the independent predictors used, "Undernourished" had the lowest MSE of 0.001729 and an optimal degree of freedom being 4. The independent predictor with the highest MSE was the "Fish..Seafood" with an MSE of 0.173299 and a degree of freedom of 4. Looking at the combinations of predictors we can see that the piecewise polynomial with predictors "Egg"+ "Obesity"+ "Animal.fats" has the lowest MSE of 0.001589 and a degree of freedom of 4, appearing to be the best model of the combinations provided. /////
@@ -282,9 +280,8 @@ Top 3 overall models:
 [1] "Variable: Vegetal.Products_Animal.Products_Undernourished_Fish..Seafood"
 [1] "Degree of Freedom: 1"
 [1] "MSE: 0.001663"
-> 
 
-# Splines: Arif (Leave Descriptions Until Last, Just Write Code)
+## Splines: Arif (Leave Descriptions Until Last, Just Write Code)
 
 Since we have many predictors to account for, I'll be optimizing each predictor against our response variable (COVID-19 deaths) individually and separately. In order to fit splines to our data, We'll be using a matrix of spline functions, or basis functions (bs()). Though we could individually set knots for each variable and test its general performance, we do not have a strong understanding of nutritional theory. Thus, instead, we'll use cross-validation techniques to optimize the degrees of freedom for each predictor and their corresponding basis functions. The degrees of freedom take into account the best knots for the predictors. Instead of mixing and matching different predictors and their basis functions, we'll be working on each predictor's basis functions individually, then compiling the best based on cross-validation performance.
 
@@ -789,7 +786,7 @@ for (i in 1:length(folds)){
   
   # Model Fit & Predict on Testing Data
   model <- lm(Deaths ~ ns(Obesity,4)+ns(Eggs,4)+ns(Undernourished,4)+
-                ns(Animal.Products,5)+ns(), data = nutrition_cln, subset = train_index)
+                ns(Animal.Products,5), data = nutrition_cln, subset = train_index)
   predictions <- predict(model, newdata = nutrition_test) 
   
   # MSE Calculation & Input into Vector
@@ -899,155 +896,445 @@ Taking into account MSE and BIC values, we are left with conflicting conclusions
 
 # GAM: Jon (Leave Descriptions Until Last, Just Write Code)
 
+
+Using the insights from the previous two sections, we now look into possible combinations of different parameter transformations. We are using Generalized additive models to do so, and will test a variety of different combinations of splines and polynomial transformations to see if they can out perform any of the splines or polynomial models on their own. 
 ```{r}
 library(gam)
 ```
 
 GAM 1 CV
-
 ```{r}
 # Empty vector for CV preds
 gam1_preds <- numeric(length(nutrition_cln$Deaths))
 
+# Empty Data Frame
+Degree <- 1:4
+gam1_empty_df <- data.frame(Degree)
+
 # CV loop
 for (i in 1:length(folds)) {
   train_index <- folds[[i]]
   test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam1_nutrition_test <- nutrition_cln[test_index,]
+  gam1_cv_mse_vector <- vector()
   
+  for (j in 1:4) {
   # Define GAM
-  gam1 <- gam(Deaths~ s(Eggs) + s(Obesity), data = nutrition_cln, subset = train_index)
+  gam1 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4)+ poly(Animal.fats, j), 
+              data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam1_test_preds <- predict(gam1, newdata = nutrition_cln[test_index, ])
-  gam1_preds[test_index] <- gam1_test_preds
+  
+  # MSE Score Calculation
+  gam1_cv_mse_vector[j] <- mean((gam1_test_preds - gam1_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam1_empty_df <- cbind(gam1_empty_df, gam1_cv_mse_vector)
 }
 
-# CV MSE
-gam1_cv_mse <- mean((gam1_preds - nutrition_cln$Deaths)^2)
-gam1_cv_mse
+rowMeans(gam1_empty_df[,-1])
+
 
 ```
+Using the two best splines from the previous section, a natural spline on Obesity and a natural spline on Eggs, we test four possible GAMs that add both of those splines with the variable Animal.fats, and vary the polynomial degree of Animal.fats from 1 to 4. The cross validation suggests that the GAM including both splines and Animal.fats of degree 1 is the best performer so far. 
+
 
 GAM 2 CV
-
 ```{r}
 # Empty vector for CV preds
 gam2_preds <- numeric(length(nutrition_cln$Deaths))
 
+# Empty Data Frame
+Degree <- 1:4
+gam2_empty_df <- data.frame(Degree)
+
 # CV loop
 for (i in 1:length(folds)) {
   train_index <- folds[[i]]
   test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam2_nutrition_test <- nutrition_cln[test_index,]
+  gam2_cv_mse_vector <- vector()
   
+  for (j in 1:4) {
   # Define GAM
-  gam2 <- gam(Deaths~ s(Obesity) + poly(Eggs, 4), data = nutrition_cln, subset = train_index)
+  gam2 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Obesity, j), 
+              data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam2_test_preds <- predict(gam2, newdata = nutrition_cln[test_index, ])
   
-  gam2_preds[test_index] <- gam2_test_preds
+  # MSE Score Calculation
+  gam2_cv_mse_vector[j] <- mean((gam2_test_preds - gam2_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam2_empty_df <- cbind(gam2_empty_df, gam2_cv_mse_vector)
 }
 
-# CV MSE
-gam2_cv_mse <- mean((gam2_preds - nutrition_cln$Deaths)^2)
-gam2_cv_mse
+rowMeans(gam2_empty_df[,-1])
+
 ```
+This model sees improvements in MSE from the previous model, but the higher degree polynomials on Obesity only worsen the model. The addition of Obesity using degree 1 is the best of the four new models and is identical to the MSE of the model that uses the two natural splines alone. 
+
 
 GAM 3 CV
-
 ```{r}
 # Empty vector for CV preds
 gam3_preds <- numeric(length(nutrition_cln$Deaths))
+
+# Empty Data Frame
+Degree <- 1:4
+gam3_empty_df <- data.frame(Degree)
 
 # CV loop
 for (i in 1:length(folds)) {
   train_index <- folds[[i]]
   test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam3_nutrition_test <- nutrition_cln[test_index,]
+  gam3_cv_mse_vector <- vector()
   
+  for (j in 1:4) {
   # Define GAM
-  gam3 <- gam(Deaths~ poly(Eggs, 3) + Obesity, data = nutrition_cln, subset = train_index)
+  gam3 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Eggs, j), 
+              data = nutrition_cln, subset = train_index)
   
   # Test set preds
   gam3_test_preds <- predict(gam3, newdata = nutrition_cln[test_index, ])
   
-  gam3_preds[test_index] <- gam3_test_preds
+  # MSE Score Calculation
+  gam3_cv_mse_vector[j] <- mean((gam3_test_preds - gam3_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam3_empty_df <- cbind(gam3_empty_df, gam3_cv_mse_vector)
 }
 
-# CV MSE
-gam3_cv_mse <- mean((gam3_preds - nutrition_cln$Deaths)^2)
-gam3_cv_mse
-
+rowMeans(gam3_empty_df[,-1])
 ```
+Once again, we see the higher degree polynomials on Eggs only worsen the model. The addition of Eggs using degree 1 is the best of the four new models and is identical to the MSE of the model that uses the two natural splines alone.
 
-# Part II
 
-# Read and Clean Part II Data
+GAM 4 CV
 ```{r}
-# Read Data into Environment
-credit <- read.csv("credit_classification.csv", sep = ",",
-                      header = TRUE)
-head(credit)
+# Empty vector for CV preds
+gam4_preds <- numeric(length(nutrition_cln$Deaths))
 
-# See Variable Names
-names(credit)
+# Empty Data Frame
+Degree <- 1:4
+gam4_empty_df <- data.frame(Degree)
 
+# CV loop
+for (i in 1:length(folds)) {
+  train_index <- folds[[i]]
+  test_index <- setdiff(1:length(nutrition_cln$Deaths), train_index)
+  gam4_nutrition_test <- nutrition_cln[test_index,]
+  gam4_cv_mse_vector <- vector()
+  
+  for (j in 1:4) {
+  # Define GAM
+  gam4 <- gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Vegetal.Products, j), 
+              data = nutrition_cln, subset = train_index)
 
-# Check for NA vals
-is.na(credit)
-
-has_na <- any(is.na(credit))
-
-if (has_na) {
-  cat("not clean")
-} else {
-  cat("clean")
+  # Test set preds
+  gam4_test_preds <- predict(gam4, newdata = nutrition_cln[test_index, ])
+  
+  # MSE Score Calculation
+  gam4_cv_mse_vector[j] <- mean((gam4_test_preds - gam4_nutrition_test$Deaths)^2)
+  
+  }
+  
+  gam4_empty_df <- cbind(gam4_empty_df, gam4_cv_mse_vector)
 }
 
-# Omit NA vals
-credit_cln <- na.omit(credit)
+rowMeans(gam4_empty_df[,-1])
+```
+Our final set of GAMs uses the same 2 natural splines as before and tests Vegetable products of degrees 1 through 4. This model reports an MSE of 0.001517956 for the fourth degree transformation of Vegetable.Products, making it the best performing model so far out of all of the Polynomials, Splines, and GAMS. The Final model is given by: gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Vegetable.Products, j))
 
-# Check again for NA vals on cleaned data
-has_na_2 <- any(is.na(credit_cln))
 
-if (has_na_2) {
-  cat("not clean")
-} else {
-  cat("clean")
+# Part II: Tree-Based Models
+
+## Introduction
+
+In this part of the project, we will run tree-based models to predict AirBnB prices per night as well as guest satisfaction. The data set consists of over fifty thousand observations of AirBnBs around the world, in cities like Amsterdam and Vienna. We will run a variety of classification and regression trees, including random forests and boosting methods. Before running our models, we'll briefly analyze features of interest in our AirBnB data and clean out some of them. 
+
+## Analyze & Clean Data
+```{r}
+# Load Data
+airbnb <- read.csv("Aemf1.csv", header = TRUE, sep = ",")
+head(airbnb) 
+names(airbnb)
+
+# AirBnB Price Analysis
+hist(airbnb$Price, breaks = 50, main = "AirBnB Prices", xlab = "AirBnB Prices") 
+summary(airbnb$Price)
+head(airbnb$Price[order(airbnb$Price, decreasing = TRUE)], 20) # Top 20 Prices 
+
+# Private Room Analysis: Indicator Variable for Private Rooms (1 = Yes, 0 = No)
+table(airbnb$Private.Room)/length(airbnb$Private.Room) # 70 - 30 Balance
+
+# Person Capacity Analysis
+hist(airbnb$Person.Capacity, breaks = 10, main = "AirBnB Person Capacity", 
+     xlab = "AirBnB Prices") 
+summary(airbnb$Person.Capacity) 
+
+# Superhost (Awarded to Top Rated Hosts) Capacity Analysis
+table(airbnb$Superhost)/length(airbnb$Superhost) # 70 - 30 Balance
+
+# Multiple Rooms Analysis
+table(airbnb$Multiple.Rooms)/length(airbnb$Multiple.Rooms) # 70 - 30 Balance
+
+# Business Analysis
+table(airbnb$Business)/length(airbnb$Business) 
+
+# For Remainder Quantitative Variables Use For Loop of Histograms
+remainder <- c("Cleanliness.Rating", "Guest.Satisfaction", "Bedrooms",                    "City.Center..km.", "Metro.Distance..km.", "Attraction.Index", "Normalised.Attraction.Index", "Restraunt.Index", "Normalised.Restraunt.Index")
+
+# Plot Histograms for Remainder Variables
+for (variable in remainder){
+  print(hist(airbnb[[variable]], breaks = 20, main = variable, xlab = variable))
+  print(summary(variable))
+}
+```
+
+In the analysis of our variables, we did not look into Room.Type and Shared.Room variables since they are both captured in the indicator variable Private.Room. We won't use the attraction and restaurant index since their distributions are not normally distributed. The data set has normally distributed values for those features. Before we run feature selection algorithms - in order to make our dataset even more lean (less features) - we will have to convert some of our features (such as Private.Room) into indicators. 
+
+We'd also like to create a classifier variable out of guest satisfaction. Interestingly, the median guest satisfaction score for the AirBnB homes in our data aset is 95 out of 100. Empirically, this makes sense since AirBnB customers (just like Uber riders and other consumers in the gig economy) are naturally inclined to give their hosts a good rating - even if the service is not quite up to par. This median threshold will thus be a separating point between "good" AirBnBs and excellent AirBnBs. We'll create a new indicator/classifier variable to highlight AirBnBs above and below the median. 
+
+```{r}
+# Convert Variables into Indicators (1 = Yes, 0 = No)
+
+# Classifier Variable: Guest Satisfaction, r = response variable
+airbnb$Guest.Satisfaction.r <- ifelse(airbnb$Guest.Satisfaction > 
+                                        median(airbnb$Guest.Satisfaction), 
+                                      1,0) 
+summary(airbnb$Guest.Satisfaction.r) # 47% are 1s
+
+# Private Room into Indicator
+airbnb$Private.Room.ind <- ifelse(airbnb$Private.Room == "True", 1,0)
+summary(airbnb$Private.Room.ind) # Check to see if proportions are right
+table(airbnb$Private.Room)/length(airbnb$Private.Room) # Yes, they match
+
+# Superhost into Indicator
+airbnb$Superhost.ind <- ifelse(airbnb$Superhost == "True", 1,0)
+summary(airbnb$Superhost.ind) 
+table(airbnb$Superhost)/length(airbnb$Superhost)
+```
+
+## Labelling Data Sets for Each of Our Two Problems
+```{r}
+# Use Dplyr To Remove Features We Won't Use 
+library(dplyr)
+
+# Data Set for the Regression Problem, R = regression
+airbnb.cln.r <- airbnb %>% select(-c("City", "Day","Room.Type", "Shared.Room",
+                                     "Private.Room", "Superhost", "Guest.Satisfaction.r",
+                                   "Attraction.Index", "Restraunt.Index")) 
+head(airbnb.cln.r)
+
+# Data set for Classification Problem (Guest Satisfaction As Response), C = class
+airbnb.cln.c <- airbnb %>% select(-c("City", "Day","Room.Type", "Shared.Room",
+                                     "Private.Room", "Superhost", "Guest.Satisfaction",
+                                   "Attraction.Index", "Restraunt.Index")) 
+
+
+head(airbnb.cln.c) # Check to see if all variables we need are in  
+
+# Check for any NA Values
+any(is.na(airbnb.cln.c))
+any(is.na(airbnb.cln.r))
+```
+
+## Feature Selection & Additional Cleaning
+```{r}
+# Boruta Algorithm
+library(Boruta)
+library(randomForest) 
+
+# Boruta for Regression Problem
+boruta_airbnb_reg <- Boruta(Price ~., data = airbnb.cln.r, doTrace = 2, 
+                            randomForest = TRUE)
+plot(boruta_airbnb_reg, las = 2, xlab = "", main = "Boruta Algorithm for Regression Problem") 
+
+# Boruta for Classification Problem
+boruta_airbnb_class <- Boruta(Guest.Satisfaction.r ~., 
+                              data = airbnb.cln.c, doTrace = 2, 
+                              randomForest = TRUE) 
+plot(boruta_airbnb_class, las = 2, xlab = "", main = "Boruta Algorithm for Classification Problem")
+boruta_airbnb_class
+```
+
+## Create Folds 
+```{r}
+set.seed(1209745)
+library(caret)
+Fold <- createFolds(airbnb.cln.r$Price, k = 5, returnTrain = TRUE) # Train Index 
+
+# See that this fold can also be used for our classification data set
+head(airbnb.cln.c[Fold[[2]],])
+```
+
+# Regression Tree: Jon 
+```{r}
+
+```
+
+
+# Classification Tree: Jon
+```{r}
+
+```
+
+
+# Random Forest: Shanie
+```{r}
+
+```
+
+
+# Boosting: Arif (Classification)
+
+For our boosting models, the main parameter we'd have to tune is the learning or shrinkage parameter. This parameter determines the learning rate of our boosting model. The smaller the value of our shrinkage parameter, gamma, the slower the learning process. Along with gamma, another parameter we could vary is the number of trees (or iterations) within our model. The more trees we use, the better our fit will be. However, this can lead to overfitting. There are a variety of methods to optimize for these parameters. The two main ways we'll be doing this is using **five fold cross-validation** (see the folds we made above) and the **train function** in R. The latter approach is more computationally efficient and will allow us to perform a grid search of the boosting model's parameters. 
+
+### Parameter Search for Classification (Train Function)
+```{r, echo = FALSE}
+# For Loop: Five Fold CV to Determine Shrinkage
+set.seed(1209745)
+library(caret)
+library(gbm)
+
+# Train Function with Grid of Parameters
+control <- trainControl(method = "cv", number = 5) # Set Five Fold Cross Validation 
+
+# Create Parameter Grid
+parameters <- expand.grid(n.trees = c(100,200,500,1000,1500),
+                          interaction.depth = c(5,10,15,20,50,100),
+                          shrinkage = c(0,0.1,0.2,0.5,1.0,2.0),
+                          n.minobsinnode = c(5,10,50,100,200))
+
+# Fit A Boosting (GBM) Model 
+features.c <- airbnb.cln.c[, !colnames(airbnb.cln.c) %in% "Guest.Satisfaction.r"]
+
+trained.gbm.fit.c <- train(x = features.c, y = as.factor(airbnb.cln.c$Guest.Satisfaction.r), 
+                           method = "gbm", trControl = control, 
+                           tuneGrid = parameters)
+```
+
+We've pasted the results from the train function below. 
+
+```{r}
+# Best Tuning Parameters for Classification Problem
+trained.gbm.fit.c$bestTune
+```
+
+### Shrinkage Parameter Search (5 Fold Cross-Validation)
+```{r}
+# Five Fold Cross Validation: For Shrinkage Parameter
+
+# Set Up Data Frame and Vectors
+Shrinkage <- c(0,0.1,0.2,0.5,1.0,2.0)
+gbm.df.c.shrink <- data.frame(Shrinkage)
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.c.test <- airbnb.cln.c[testing.i,]
+  airbnb.c.train <- airbnb.cln.c[training.i,]
+  
+  # Empty the Vector Before Each Fold Run
+  gbm.err.c.vec <- vector()
+  
+  for (j in Shrinkage){
+    # Fit the Model
+    gbm.model <- gbm(Guest.Satisfaction.r ~., data = airbnb.c.train, 
+                     distribution = "bernoulli", 
+                     shrinkage = j) 
+    
+    # Predict the Binary Classifier in the Testing Set
+    gbm.predict <- predict(gbm.model, newdata = airbnb.c.test, type = "response") 
+    
+    # Convert to Classification
+    gbm.predict.c <- ifelse(gbm.predict > 0.5, 1,0)
+    
+    # Predict the Accuracy of the Model
+    accuracy <- sum(gbm.predict.c == airbnb.c.test$Guest.Satisfaction.r)/nrow(airbnb.c.test)
+    
+    # Error Score & Input into Vector (1- Accuracy)
+    error <- 1-accuracy
+    gbm.err.c.vec <- append(gbm.err.c.vec, error)
+  }
+  
+  # Append our Error Vector into Our Data Frame (Memory)
+  gbm.df.c.shrink <- cbind(gbm.df.c.shrink, gbm.err.c.vec)
+  
+  # When the For Loop Runs Again, The Vector Will Be Emptied, Data Frame Maintains
 }
 
-credit_cln
-
+# Data Frame Clean
+gbm.df.c.shrink$Means <- rowMeans(gbm.df.c.shrink[,2:6]) 
+colnames(gbm.df.c.shrink) <- c("Shrinkage","Fold 1","Fold 2", "Fold 3", "Fold 4",
+                               "Fold 5", "CV Error Means")
+print(gbm.df.c.shrink)
 ```
 
+From running five fold cross validation to test a variety of shrinkage parameters, the most optimal one, which returned the lowest CV error score, was a shrinkage parameter value of 0.5. The shrinkage parameter value of 0.2 was a very close second - which matches our findings from the train function we ran above. 
 
+### Number of Trees Parameter Search (5 Fold Cross-Validation)
 ```{r}
-# install.packages("rpart")
-library(rpart)
-# install.packages("tree")
-library(tree)
-```
+# Five Fold Cross Validation: For Number of Trees
+N.Trees <- c(100,200,500,1000,1500)
+gbm.df.c.ntree <- data.frame(N.Trees)
 
-# Regression Tree
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.c.test <- airbnb.cln.c[testing.i,]
+  airbnb.c.train <- airbnb.cln.c[training.i,]
+  
+  # Empty the Vector Before Each Fold Run
+  gbm.err.c.vec <- vector()
+  
+  for (j in N.Trees){
+    # Fit the Model
+    gbm.model <- gbm(Guest.Satisfaction.r ~., data = airbnb.c.train, 
+                     distribution = "bernoulli", 
+                     n.trees = j)
+    
+    # Predict the Binary Classifier in the Testing Set
+    gbm.predict <- predict(gbm.model, newdata = airbnb.c.test, type = "response") 
+    
+    # Convert to Binary Classifier
+    gbm.predict.c <- ifelse(gbm.predict.c > 0.5, 1,0)
+    
+    # Predict the Accuracy of the Model
+    accuracy <- sum(gbm.predict.c == airbnb.c.test$Guest.Satisfaction.r)/nrow(airbnb.c.test)
+    
+    # Error Score & Input into Vector (1- Accuracy)
+    error <- 1-accuracy
+    gbm.err.c.vec <- append(gbm.err.c.vec, error)
+  }
+  
+  # Append our Error Vector into Our Data Frame (Memory)
+  gbm.df.c.ntree <- cbind(gbm.df.c.ntree, gbm.err.c.vec)
+  
+  # When the For Loop Runs Again, The Vector Will Be Emptied, Data Frame Maintains
+}
+
+# Data Frame Clean
+gbm.df.c.ntree$Means <- rowMeans(gbm.df.c.ntree[,2:6]) 
+colnames(gbm.df.c.ntree) <- c("Trees","Fold 1","Fold 2", "Fold 3", "Fold 4",
+                               "Fold 5", "CV Error Means")
+print(gbm.df.c.ntree)
+```
+After running cross validation on the number of trees, we find that varying them from the levels we specified does not really make a difference on how well the boosting algorithm performs in testing errors. This shows that the boosting algorithm converges to a certain prediction level, with respect to the number of trees. Other parameters, such as shrinkage, may be more optimal in improving accuracy. The average error score for our varying levels of trees is quite high (greater than 75%). 
+
+# Boosting: Arif (Classification)
 ```{r}
 
-# 
-# reg.tree.model <- tree(Credit_score ~ Monthly_Balance, data=credit_cln)
-# plot(reg.tree.model)
-# text(reg.tree.model, cex=.75)
 ```
-
-# Classification Tree
-```{r}
-# class.tree.model <- tree(log(MedianHouseValue) ~ Longitude + Latitude, data=real.estate)
-# plot(class.tree.model)
-# text(class.tree.model, cex=.75)
-```
-
-
-
-
-
-
 
 
 
