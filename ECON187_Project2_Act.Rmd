@@ -1312,7 +1312,7 @@ We've pasted the results from the train function below.
 trained.gbm.fit.c$bestTune
 ```
 
-### Shrinkage Parameter Search (5 Fold Cross-Validation)
+### Shrinkage Parameter Search for Classification Problem (5 Fold Cross-Validation)
 ```{r}
 # Five Fold Cross Validation: For Shrinkage Parameter
 
@@ -1363,7 +1363,7 @@ colnames(gbm.df.c.shrink) <- c("Shrinkage","Fold 1","Fold 2", "Fold 3", "Fold 4"
 print(gbm.df.c.shrink)
 ```
 
-From running five fold cross validation to test a variety of shrinkage parameters, the most optimal one, which returned the lowest CV error score, was a shrinkage parameter value of 0.5. The shrinkage parameter value of 0.2 was a very close second - which matches our findings from the train function we ran above. 
+From running five fold cross validation to test a variety of shrinkage parameters, the most optimal one, which returned the lowest CV error score, was a shrinkage parameter value of 0.5. The shrinkage parameter value of 0.2 was a very close second - which matches our findings from the train function we ran above. Moving forward, we'd recommend using the train function to identify the most optimal parameters. Looking at each parameter individually just helps to confirm our findings through the train function (a form of a sanity check). We'll still run cross validation to see how the model performs across five folds.  
 
 ### Number of Trees Parameter Search (5 Fold Cross-Validation)
 ```{r}
@@ -1413,17 +1413,209 @@ colnames(gbm.df.c.ntree) <- c("Trees","Fold 1","Fold 2", "Fold 3", "Fold 4",
                                "Fold 5", "CV Error Means")
 print(gbm.df.c.ntree)
 ```
+
 After running cross validation on the number of trees, we find that varying them from the levels we specified does not really make a difference on how well the boosting algorithm performs in testing errors. This shows that the boosting algorithm converges to a certain prediction level, with respect to the number of trees. Other parameters, such as shrinkage, may be more optimal in improving accuracy. The average error score for our varying levels of trees is quite high (greater than 75%). 
 
-# Boosting: Arif (Classification)
+### Optimal Boosting Algorithm Model for Classification Problem
 ```{r}
+# Cross Validation to Check Accuracy of GBM
+gbm.opt.err.vector <- vector() # Vector to Input Errors
 
+for (i in 1:5){
+  # Set Up Folds
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.c.test <- airbnb.cln.c[testing.i,]
+  airbnb.c.train <- airbnb.cln.c[training.i,] 
+  
+  # Fit Model According to "Best Tune" Feature of Trained Function
+  gbm.model <- gbm(Guest.Satisfaction.r ~., data = airbnb.c.train, 
+                     distribution = "bernoulli", 
+                     shrinkage = 0.2, n.trees = 1500, 
+                   interaction.depth = 20, n.minobsinnode = 5) 
+  
+  # Predict Values According to Model
+  gbm.predict <- predict(gbm.model, newdata = airbnb.c.test, type = "response") 
+  
+  # Convert to Binary Classifier
+  gbm.predict.c <- ifelse(gbm.predict > 0.5, 1,0)
+  
+  # Accuracy Score
+  accuracy <- sum(gbm.predict.c == airbnb.c.test$Guest.Satisfaction.r)/nrow(airbnb.c.test)
+  
+  # Error Calculation & Input
+  error.c <- 1-accuracy
+  gbm.opt.err.vector[i] <- error.c
+}
+
+# Print Vector of Errors & Show Mean of CV Error
+print(gbm.opt.err.vector)
+mean(gbm.opt.err.vector)
 ```
 
+Using our most optimal boosting model for the classification problem, our mean prediction error, using cross validation, is 16.5%. The optimal model uses parameters identified using our hyper-parameter grid search through the train function. This error metric is significantly lower than other error metrics from the different boosting models we experimented with (cross-validation algorithms searching for an optimal parameter). We'll see how this fares with other tree algorithms we have used. 
 
+# Boosting: Arif (Regression Problem)
+```{r}
+# For Loop: Five Fold CV to Determine Shrinkage
+set.seed(1209745)
+library(caret)
+library(gbm)
 
+# Train Function with Grid of Parameters
+control <- trainControl(method = "cv", number = 5) # Set Five Fold Cross Validation 
 
+# Create Parameter Grid
+parameters.r <- expand.grid(n.trees = c(100,200,500,1000,1500),
+                          interaction.depth = c(5,10,15,20,50,100),
+                          shrinkage = c(0,0.1,0.2,0.5,1.0,2.0),
+                          n.minobsinnode = c(5))
 
+# Fit A Boosting (GBM) Model 
+features.r <- airbnb.cln.r[, !colnames(airbnb.cln.r) %in% "Price"]
+
+trained.gbm.fit.r <- train(x = features.r, y = airbnb.cln.r$Price, 
+                           method = "gbm", trControl = control, 
+                           tuneGrid = parameters.r)
+```
+
+We'll paste the output (optimized boosting model parameters) from the train function below. An optimal boosting model would create 1500 separate trees (each with an interaction depth of 20), along with a shrinkage parameter of 0.1. Each split would require at least 5 observations, according to our train function. 
+
+```{r}
+trained.gbm.fit.r$bestTune
+```
+
+### Shrinkage Parameter Search for Regression Problem
+```{r}
+# Five Fold Cross Validation: For Shrinkage Parameter
+
+# Set Up Data Frame and Vectors
+Shrinkage <- c(0,0.1,0.2,0.5,1.0,2.0)
+gbm.df.r.shrink <- data.frame(Shrinkage)
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.r$Price), training.i)
+  airbnb.r.test <- airbnb.cln.r[testing.i,]
+  airbnb.r.train <- airbnb.cln.r[training.i,]
+  
+  # Empty the Vector Before Each Fold Run
+  gbm.err.r.vec <- vector()
+  
+  for (j in Shrinkage){
+    # Fit the Model
+    gbm.model <- gbm(Price ~., data = airbnb.r.train, 
+                     distribution = "gaussian", 
+                     shrinkage = j) 
+    
+    # Predict the Model
+    gbm.predict <- predict(gbm.model, newdata = airbnb.r.test) 
+    
+    # Predict the Accuracy of the Model Using MSE
+    mse_score <- mean((airbnb.r.test$Price-gbm.predict)^2)
+
+    # Input MSE Scores Into Vector
+    gbm.err.r.vec <- append(gbm.err.r.vec, mse_score)     
+
+  }
+  
+  # Append our MSE Vector into Our Data Frame (Memory)
+  gbm.df.r.shrink <- cbind(gbm.df.r.shrink, gbm.err.r.vec)
+  
+  # When the For Loop Runs Again, The Vector Will Be Emptied, Data Frame Maintains
+}
+
+# Data Frame Clean
+gbm.df.r.shrink$Means <- rowMeans(gbm.df.r.shrink[,2:6]) 
+colnames(gbm.df.r.shrink) <- c("Shrinkage","Fold 1","Fold 2", "Fold 3", "Fold 4",
+                               "Fold 5", "CV Error Means")
+print(gbm.df.r.shrink)
+```
+
+A shrinkage parameter of 0.2 seems to minimize average MSE from five fold cross validation. A shrinkage parameter of 0.1, which the train function confirmed, does just as well compared to other parameter values. 
+
+### Number of Trees Search for Regression Problem
+```{r}
+# Five Fold Cross Validation: For Number of Trees
+N.Trees <- c(100,200,500,1000,1500)
+gbm.df.r.ntree <- data.frame(N.Trees)
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.r$Price), training.i)
+  airbnb.r.test <- airbnb.cln.r[testing.i,]
+  airbnb.r.train <- airbnb.cln.r[training.i,]
+  
+# Empty the Vector Before Each Fold Run
+  gbm.err.r.vec <- vector()
+  
+  for (j in N.Trees){
+    # Fit the Model
+    gbm.model <- gbm(Price ~., data = airbnb.r.train, 
+                     distribution = "gaussian", 
+                     n.trees = j) 
+    
+    # Predict the Model
+    gbm.predict <- predict(gbm.model, newdata = airbnb.r.test) 
+    
+    # Predict the Accuracy of the Model Using MSE
+    mse_score <- mean((airbnb.r.test$Price-gbm.predict)^2)
+
+    # Input MSE Scores Into Vector
+    gbm.err.r.vec <- append(gbm.err.r.vec, mse_score)     
+
+  }
+  
+  # Append our MSE Vector into Our Data Frame (Memory)
+  gbm.df.r.ntree <- cbind(gbm.df.r.ntree, gbm.err.r.vec)
+  
+  # When the For Loop Runs Again, The Vector Will Be Emptied, Data Frame Maintains
+}
+
+# Data Frame Clean
+gbm.df.r.ntree$Means <- rowMeans(gbm.df.r.ntree[,2:6]) 
+colnames(gbm.df.r.ntree) <- c("Trees", "Fold 1","Fold 2", "Fold 3", "Fold 4",
+                               "Fold 5", "CV Error Means")
+print(gbm.df.r.ntree)
+```
+
+The number of trees that minimizes average MSE scores across all five folds is 500. Unlike with the shrinkage parameter, the average MSE scores are quite comparable. We saw this with the number of trees in the classification problem (to an extreme where the errors all match). We can see that 1500 trees, which our train function recommends, does perform quite well.
+
+Moving forward as we did with our classification problem, we'll use the hyperparameters identified in our train function to fit our optimal boosting algorithm. We'll use five fold cross validation to compare our models to others. 
+
+### Optimal Boosting Algorithm for Regression Problem
+```{r}
+# Cross Validation to Check Accuracy of GBM Model
+gbm.opt.err.vector <- vector() 
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.r$Price), training.i)
+  airbnb.r.test <- airbnb.cln.r[testing.i,]
+  airbnb.r.train <- airbnb.cln.r[training.i,]
+  
+  # Fit the Model
+  gbm.model <- gbm(Price ~., data = airbnb.r.train, 
+                     distribution = "gaussian", shrinkage = 0.1,
+                   n.trees = 1500, interaction.depth = 20, n.minobsinnode = 5)
+  
+  # Predict the Model on New Data
+  gbm.predict <- predict(gbm.model, newdata = airbnb.r.test, type = "response")
+  
+  # Calculate MSE Scores
+  gbm.opt.err.vector[i] <- mean((airbnb.r.test$Price-gbm.predict)^2)
+  }
+
+# Print Vector of Errors & Show Mean of CV Error
+print(gbm.opt.err.vector)
+mean(gbm.opt.err.vector)
+  
+```
+
+Using our optimal boosting algorithm (with parameters defined by the train function), our algorithm returns an average MSE across five folds of 25325.31. This is much lower than the average MSE scores we saw in our other cross validation methods, where we tried to optimize for shrinkage and number of trees. When comparing our boosting algorithm to other techniques, we'll use this boosting algorithm as a benchmark. 
 
 
 
