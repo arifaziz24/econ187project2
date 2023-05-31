@@ -1188,9 +1188,93 @@ head(airbnb.cln.c[Fold[[2]],])
 
 
 # Random Forest: Shanie
+
+
+## Regression RF - Shanie
+
 ```{r}
+library(randomForest)
+library(caret)
+
+# Set seed for reproducibility
+set.seed(1209745)
+
+# Create a list to store the model results for each fold
+model_results <- list()
+
+# Perform cross-validation
+for (fold in 1:length(Fold)) {
+  # Split data into training and testing sets based on the fold
+  train_data <- airbnb.cln.r[Fold[[fold]], ]
+  test_data <- airbnb.cln.r[-Fold[[fold]], ]
+  
+  # Create a random forest model
+  rf_model <- randomForest(Price ~ ., data = train_data)
+  
+  # Store the model results
+  model_results[[fold]] <- list(model = rf_model, test_data = test_data)
+}
+
+# Access model results for a specific fold (e.g., fold 1)
+fold1_model <- model_results[[1]]$model
+fold1_test_data <- model_results[[1]]$test_data
+
+# Make predictions using the random forest model on the test data of fold 1
+predictions <- predict(fold1_model, newdata = fold1_test_data)
+
+# Evaluate the model performance (e.g., using Mean Squared Error)
+mse <- mean((predictions - fold1_test_data$Price)^2)
+
+mse
 
 ```
+
+## Classificatwion RF - Shanie
+
+```{r}
+library(randomForest)
+library(caret)
+
+# Set seed for reproducibility
+set.seed(1209745)
+
+# Create a list to store the model results for each fold
+model_results <- list()
+
+# Perform cross-validation
+for (fold in 1:length(Fold)) {
+  # Split data into training and testing sets based on the fold
+  train_data <- airbnb.cln.c[Fold[[fold]], ]
+  test_data <- airbnb.cln.c[-Fold[[fold]], ]
+  
+  # Create a random forest model
+  rf_model <- randomForest(Guest.Satisfaction.r ~ ., data = train_data, importance = TRUE)
+  
+  # Store the model results
+  model_results[[fold]] <- list(model = rf_model, test_data = test_data)
+}
+
+# Access model results for a specific fold (e.g., fold 1)
+fold1_model <- model_results[[1]]$model
+fold1_test_data <- model_results[[1]]$test_data
+# Make predictions using the random forest model
+predictions <- predict(fold1_model, newdata = fold1_test_data, type = "class")
+
+
+mse <- mean((predictions - fold1_test_data$Guest.Satisfaction.r)^2)
+mae <- mean(abs(predictions - fold1_test_data$Guest.Satisfaction.r))
+rsquared <- 1 - sum((predictions - fold1_test_data$Guest.Satisfaction.r)^2) / sum((fold1_test_data$Guest.Satisfaction.r - mean(fold1_test_data$Guest.Satisfaction.r))^2)
+
+print(mse)
+print(mae)
+print(rsquared)
+
+
+```
+
+[1] 0.1112281
+[1] 0.2517696
+[1] 0.5545155
 
 
 # Boosting: Arif (Classification)
