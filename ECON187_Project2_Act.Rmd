@@ -1179,12 +1179,37 @@ head(airbnb.cln.c[Fold[[2]],])
 
 # Regression Tree: Jon 
 ```{r}
+set.seed(1234234)
+library(tree)
+
+# Fit Regression Tree
+
+reg.tree <- tree(Price~., airbnb.cln.r)
+summary(reg.tree)
+
+plot(reg.tree)
+text(reg.tree, pretty = 0, cex = 1)
+
+# Cross validation to determine what pruning, if any, is necessary
+cv.air.r <- cv.tree(reg.tree, K=5)
+plot(cv.air.r$size, cv.air.r$dev, type = 'b')
 
 ```
 
 
 # Classification Tree: Jon
 ```{r}
+
+#Fit Classification Tree
+class.tree <- tree(as.factor(Guest.Satisfaction.r)~., airbnb.cln.c)
+summary(class.tree)
+
+plot(class.tree)
+text(class.tree, pretty=0, cex=1)
+
+# Cross validation to determine what pruning, if any, is necessary
+cv.air.c <- cv.tree(class.tree, K=5)
+plot(cv.air.c$size, cv.air.c$dev, type = 'b')
 
 ```
 
