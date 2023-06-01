@@ -5,8 +5,6 @@ date: "2023-05-18"
 output: pdf_document
 ---
 
-#Notes #pull #add/save #commit #pull(to get someone elses)/push (to give yours to everyone else)
-
 # Part I: Non-Linear Models
 
 ## Introduction
@@ -1050,6 +1048,7 @@ for (i in 1:length(folds)) {
 
 rowMeans(gam4_empty_df[,-1])
 ```
+
 Our final set of GAMs uses the same 2 natural splines as before and tests Vegetable products of degrees 1 through 4. This model reports an MSE of 0.001517956 for the fourth degree transformation of Vegetable.Products, making it the best performing model so far out of all of the Polynomials, Splines, and GAMS. The Final model is given by: gam(Deaths ~ ns(Obesity,4) + ns(Eggs,4) + poly(Vegetable.Products, j))
 
 
@@ -1165,7 +1164,6 @@ plot(boruta_airbnb_class, las = 2, xlab = "", main = "Boruta Algorithm for Class
 boruta_airbnb_class
 ```
 
-
 ## Create Folds 
 ```{r}
 set.seed(1209745)
@@ -1176,8 +1174,7 @@ Fold <- createFolds(airbnb.cln.r$Price, k = 5, returnTrain = TRUE) # Train Index
 head(airbnb.cln.c[Fold[[2]],])
 ```
 
-
-# Regression Tree: Jon 
+# Regression Tree: 
 ```{r}
 set.seed(1234234)
 library(tree)
@@ -1195,6 +1192,7 @@ cv.air.r <- cv.tree(reg.tree, K=5)
 plot(cv.air.r$size, cv.air.r$dev, type = 'b')
 
 ```
+
 Here we have fit the regression tree using the response variable Price and all predictors. The preliminary regression tree model and cross validation indicate that the best pruning metric is at "best = 5" (given the fully grown tree has 5 terminal nodes, this outcome suggests that no pruning is necessary). We will now run the cross validation manually to allow us to use consistent folds across models. The manual cross validation will also allow us to calculate MSE and compare models using the metric. 
 
 
@@ -1237,12 +1235,11 @@ for (i in 1:5){
 }
 reg.tree.all.folds.mse
 rowMeans(reg.tree.all.folds.mse[,-1])
-
-?prune.tree
 ```
+
 The manual cross validation once again confirms that the "best" value to use to prune the regression tree that produces the lowest MSE is 5. Because the fully grown tree has 5 terminal nodes, this implies that no pruning is necessary. This gives us an MSE of 41588.38. 
 
-# Classification Tree: Jon
+# Classification Tree:
 ```{r}
 
 #Fit Classification Tree
@@ -1257,6 +1254,7 @@ cv.air.c <- cv.tree(class.tree, K=5)
 plot(cv.air.c$size, cv.air.c$dev, type = 'b')
 
 ```
+
 We have now fit the Classification tree model using Guest.Satisfaction.r as the response and all predictors available. The cross validation function has suggested that 4 is the best pruning value, and given the fully grown tree has only 4 terminal nodes, this output suggests that no pruning is necessary. Once again we will run the cross validation manually to use consistent folds across models and calculate the average MSE across folds while varying the number of terminal nodes through pruning.
 
 ```{r}
@@ -1300,12 +1298,13 @@ for (i in 1:5){
 class.tree.all.folds.acc
 
 ```
+
 The accuracy of the cross validation is suggesting uniform performance across all pruning values (0.2417596). Because of this and the previous CV suggestion of 4 beaing the best pruning value, we will not prune the tree.
 
-# Random Forest: Shanie
+# Random Forest: 
 
 
-## Regression RF - Shanie
+## Regression RF
 
 ```{r}
 library(randomForest)
@@ -1344,7 +1343,7 @@ mse
 
 ```
 
-## Classificatwion RF - Shanie
+## Classificatwion RF
 
 ```{r}
 library(randomForest)
@@ -1392,7 +1391,7 @@ print(rsquared)
 [1] 0.5545155
 
 
-# Boosting: Arif (Classification)
+# Boosting: Classification Problem
 
 For our boosting models, the main parameter we'd have to tune is the learning or shrinkage parameter. This parameter determines the learning rate of our boosting model. The smaller the value of our shrinkage parameter, gamma, the slower the learning process. Along with gamma, another parameter we could vary is the number of trees (or iterations) within our model. The more trees we use, the better our fit will be. However, this can lead to overfitting. There are a variety of methods to optimize for these parameters. The two main ways we'll be doing this is using **five fold cross-validation** (see the folds we made above) and the **train function** in R. The latter approach is more computationally efficient and will allow us to perform a grid search of the boosting model's parameters. 
 
@@ -1415,16 +1414,27 @@ parameters <- expand.grid(n.trees = c(100,200,500,1000,1500),
 # Fit A Boosting (GBM) Model 
 features.c <- airbnb.cln.c[, !colnames(airbnb.cln.c) %in% "Guest.Satisfaction.r"]
 
-trained.gbm.fit.c <- train(x = features.c, y = as.factor(airbnb.cln.c$Guest.Satisfaction.r), 
-                           method = "gbm", trControl = control, 
-                           tuneGrid = parameters)
+# Train Function 
+# trained.gbm.fit.c <- train(x = features.c, y = as.factor(airbnb.cln.c$Guest.Satisfaction.r), 
+#                            method = "gbm", trControl = control, 
+#                            tuneGrid = parameters)
 ```
 
 We've pasted the results from the train function below. 
 
 ```{r}
 # Best Tuning Parameters for Classification Problem
-trained.gbm.fit.c$bestTune
+# trained.gbm.fit.c$bestTune 
+
+# n.trees
+# <dbl>
+# interaction.depth
+# <dbl>
+# shrinkage
+# <dbl>
+# n.minobsinnode
+# <dbl>
+# 380	1500	20	0.2	5
 ```
 
 ### Shrinkage Parameter Search for Classification Problem (5 Fold Cross-Validation)
@@ -1570,7 +1580,7 @@ mean(gbm.opt.err.vector)
 
 Using our most optimal boosting model for the classification problem, our mean prediction error, using cross validation, is 16.5%. The optimal model uses parameters identified using our hyper-parameter grid search through the train function. This error metric is significantly lower than other error metrics from the different boosting models we experimented with (cross-validation algorithms searching for an optimal parameter). We'll see how this fares with other tree algorithms we have used. 
 
-# Boosting: Arif (Regression Problem)
+# Boosting: Regression Problem
 ```{r}
 # For Loop: Five Fold CV to Determine Shrinkage
 set.seed(1209745)
@@ -1589,15 +1599,27 @@ parameters.r <- expand.grid(n.trees = c(100,200,500,1000,1500),
 # Fit A Boosting (GBM) Model 
 features.r <- airbnb.cln.r[, !colnames(airbnb.cln.r) %in% "Price"]
 
-trained.gbm.fit.r <- train(x = features.r, y = airbnb.cln.r$Price, 
-                           method = "gbm", trControl = control, 
-                           tuneGrid = parameters.r)
+# # Trained Function
+# trained.gbm.fit.r <- train(x = features.r, y = airbnb.cln.r$Price, 
+#                            method = "gbm", trControl = control, 
+#                            tuneGrid = parameters.r)
 ```
 
-We'll paste the output (optimized boosting model parameters) from the train function below. An optimal boosting model would create 1500 separate trees (each with an interaction depth of 20), along with a shrinkage parameter of 0.1. Each split would require at least 5 observations, according to our train function. 
+We'll paste the output (optimized boosting model parameters) from the train function below. The markdown version of our project will not show the output of the train function because it takes too long to run (~ 4 hours). An optimal boosting model would create 1500 separate trees (each with an interaction depth of 20), along with a shrinkage parameter of 0.1. Each split would require at least 5 observations, according to our train function. 
 
 ```{r}
-trained.gbm.fit.r$bestTune
+# Output
+#trained.gbm.fit.r$bestTune
+
+# n.trees
+# <dbl>
+# interaction.depth
+# <dbl>
+# shrinkage
+# <dbl>
+# n.minobsinnode
+# <dbl>
+# 50	1500	20	0.1	5
 ```
 
 ### Shrinkage Parameter Search for Regression Problem
