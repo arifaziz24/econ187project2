@@ -1195,7 +1195,52 @@ cv.air.r <- cv.tree(reg.tree, K=5)
 plot(cv.air.r$size, cv.air.r$dev, type = 'b')
 
 ```
+Here we have fit the regression tree using the response variable Price and all predictors. The preliminary regression tree model and cross validation indicate that the best pruning metric is at "best = 5" (given the fully grown tree has 5 terminal nodes, this outcome suggests that no pruning is necessary). We will now run the cross validation manually to allow us to use consistent folds across models. The manual cross validation will also allow us to calculate MSE and compare models using the metric. 
 
+
+```{r}
+# Regression cross validation:
+
+# Create empty vector to store MSE values
+reg.tree.mse <- vector()
+
+best.val <- c(2, 3, 4, 5)
+reg.tree.all.folds.mse <- data.frame(best.val)
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.r.test <- airbnb.cln.r[testing.i,]
+  airbnb.r.train <- airbnb.cln.r[training.i,]
+  
+    # Empty the Vector Before Each Fold Run
+  reg.tree.mse <- vector()
+  
+  for (j in 2:5){
+    # Fit the Model
+    reg.tree.cv <- tree(Price~., airbnb.r.train)
+    reg.tree.prune <- prune.tree(reg.tree.cv, best = j) 
+    
+    # Predict the Model
+    reg.prune.predict <- predict(reg.tree.prune, newdata = airbnb.r.test) 
+    
+    # Predict the Accuracy of the Model Using MSE
+    mse_score <- mean((airbnb.r.test$Price-reg.prune.predict)^2)
+
+    # Input MSE Scores Into Vector
+    reg.tree.mse <- append(reg.tree.mse, mse_score)     
+  
+  }
+   # Append our MSE Vector into Our Data Frame (Memory)
+  reg.tree.all.folds.mse <- cbind(reg.tree.all.folds.mse, reg.tree.mse)
+}
+reg.tree.all.folds.mse
+rowMeans(reg.tree.all.folds.mse[,-1])
+
+?prune.tree
+```
+The manual cross validation once again confirms that the "best" value to use to prune the regression tree that produces the lowest MSE is 5. Because the fully grown tree has 5 terminal nodes, this implies that no pruning is necessary. This gives us an MSE of 41588.38. 
 
 # Classification Tree: Jon
 ```{r}
@@ -1212,8 +1257,50 @@ cv.air.c <- cv.tree(class.tree, K=5)
 plot(cv.air.c$size, cv.air.c$dev, type = 'b')
 
 ```
+We have now fit the Classification tree model using Guest.Satisfaction.r as the response and all predictors available. The cross validation function has suggested that 4 is the best pruning value, and given the fully grown tree has only 4 terminal nodes, this output suggests that no pruning is necessary. Once again we will run the cross validation manually to use consistent folds across models and calculate the average MSE across folds while varying the number of terminal nodes through pruning.
 
+```{r}
+# Classification cross validation:
 
+class.tree.mse <- vector()
+
+best.val.c <- c(2, 3, 4)
+class.tree.all.folds.acc <- data.frame(best.val.c)
+
+for (i in 1:5){
+  # Specify the Fold
+  training.i <- Fold[[1]]
+  testing.i <- setdiff(1:length(airbnb.cln.c$Guest.Satisfaction.r), training.i)
+  airbnb.c.test <- airbnb.cln.c[testing.i,]
+  airbnb.c.train <- airbnb.cln.c[training.i,]
+   
+    # Empty the Vector Before Each Fold Run
+  class.tree.err <- vector()
+  
+  for (j in 2:4){
+    # Fit the Model
+    class.tree.cv <- tree(as.factor(Guest.Satisfaction.r)~., airbnb.c.train)
+    class.tree.prune <- prune.tree(class.tree.cv, best = j) 
+    
+    # Predict the Model
+    prune.predict <- predict(class.tree.prune, newdata = airbnb.c.test, type = "class") 
+    
+    # Predict the Accuracy of the Model
+    accuracy <- sum(prune.predict == airbnb.c.test$Guest.Satisfaction.r)/nrow(airbnb.c.test)
+    
+    # Error Score & Input into Vector (1- Accuracy)
+    error <- 1-accuracy
+    class.tree.err <- append(class.tree.err, error)
+  
+  }
+  
+   # Append our MSE Vector into Our Data Frame (Memory)
+  class.tree.all.folds.acc <- cbind(class.tree.all.folds.acc, class.tree.err)
+}
+class.tree.all.folds.acc
+
+```
+The accuracy of the cross validation is suggesting uniform performance across all pruning values (0.2417596). Because of this and the previous CV suggestion of 4 beaing the best pruning value, we will not prune the tree.
 
 # Random Forest: Shanie
 
