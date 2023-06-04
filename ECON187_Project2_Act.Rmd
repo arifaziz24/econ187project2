@@ -133,7 +133,7 @@ for (variable in names(nutrition_cln)){
 }
 ```
 
-# Creating folds for all Cross-Validation Testing
+# Five Fold Cross Validation Set Up
 
 ```{r}
 library(caret)
@@ -142,7 +142,7 @@ folds <- createFolds(nutrition$Deaths, k = 5, returnTrain = TRUE)
 
 ```
 
-## Piecewise Polynomial: Shanie (Leave Descriptions Until Last, Just Write Code)
+## Piecewise Polynomial: 
 
 ```{r}
 variable_list <- list() # Empty List to Store Performance Scores for Each Predictor
@@ -243,7 +243,7 @@ for (variable in names(variable_list)) {
 }
 ```
 
-//// will remove this ////Looking at the piecewise polynomial model of different combinations of the predictors againt the variable "Deaths" we can see that of the independent predictors used, "Undernourished" had the lowest MSE of 0.001729 and an optimal degree of freedom being 4. The independent predictor with the highest MSE was the "Fish..Seafood" with an MSE of 0.173299 and a degree of freedom of 4. Looking at the combinations of predictors we can see that the piecewise polynomial with predictors "Egg"+ "Obesity"+ "Animal.fats" has the lowest MSE of 0.001589 and a degree of freedom of 4, appearing to be the best model of the combinations provided. /////
+Looking at the piecewise polynomial model of different combinations of the predictors against the variable "Deaths" we can see that of the independent predictors used, "Undernourished" had the lowest MSE of 0.001729 and an optimal degree of freedom being 4. The independent predictor with the highest MSE was the "Fish..Seafood" with an MSE of 0.173299 and a degree of freedom of 4. Looking at the combinations of predictors we can see that the piecewise polynomial with predictors "Egg"+ "Obesity"+ "Animal.fats" has the lowest MSE of 0.001589 and a degree of freedom of 4, appearing to be the best model of the combinations provided.
 
 Top individual Predictors
 Vegetal.Products
@@ -279,7 +279,7 @@ Top 3 overall models:
 [1] "Degree of Freedom: 1"
 [1] "MSE: 0.001663"
 
-## Splines: Arif (Leave Descriptions Until Last, Just Write Code)
+## Splines:
 
 Since we have many predictors to account for, I'll be optimizing each predictor against our response variable (COVID-19 deaths) individually and separately. In order to fit splines to our data, We'll be using a matrix of spline functions, or basis functions (bs()). Though we could individually set knots for each variable and test its general performance, we do not have a strong understanding of nutritional theory. Thus, instead, we'll use cross-validation techniques to optimize the degrees of freedom for each predictor and their corresponding basis functions. The degrees of freedom take into account the best knots for the predictors. Instead of mixing and matching different predictors and their basis functions, we'll be working on each predictor's basis functions individually, then compiling the best based on cross-validation performance.
 
@@ -892,10 +892,10 @@ print(model_comp_df)
 
 Taking into account MSE and BIC values, we are left with conflicting conclusions. BIC would favor our first model with a natural spline on obesity. This model has the lowest number of parameters favoring its BIC score. In terms of MSE, it does not perform as well as model 2 which takes a natural spline of obesity and egg fat content. Out of the 6 models we tested (using a quasi-forward step selection method), model 2 returned the lowest MSE score. Since we are most concerned about prediction accuracy over parsimony (though model 2 is still quite parsimonious), our natural spline exercise point towards using a natural spline regression of two predictors: obesity and eggs with knot degrees of freedom of 4 for both. We ran a sanity check by creating a model with obesity (by far the best natural spline predictor) and another strong natural spline predictor (animal fats). This sanity check was to see if there were other possible and more optimal predictor interactions outside of our forward stepwise method. The MSE and BIC for that two predictor model was not as optimal as its forward stepwise counterpart model 2 with obesity and egg as predictors. Moving forward, we'll look into generalized additive methods.
 
-# GAM: Jon (Leave Descriptions Until Last, Just Write Code)
-
+# Generalized Additive Models
 
 Using the insights from the previous two sections, we now look into possible combinations of different parameter transformations. We are using Generalized additive models to do so, and will test a variety of different combinations of splines and polynomial transformations to see if they can out perform any of the splines or polynomial models on their own. 
+
 ```{r}
 library(gam)
 ```
@@ -936,10 +936,10 @@ rowMeans(gam1_empty_df[,-1])
 
 
 ```
+
 Using the two best splines from the previous section, a natural spline on Obesity and a natural spline on Eggs, we test four possible GAMs that add both of those splines with the variable Animal.fats, and vary the polynomial degree of Animal.fats from 1 to 4. The cross validation suggests that the GAM including both splines and Animal.fats of degree 1 is the best performer so far. 
 
-
-GAM 2 CV
+### GAM 2 CV
 ```{r}
 # Empty vector for CV preds
 gam2_preds <- numeric(length(nutrition_cln$Deaths))
@@ -974,10 +974,10 @@ for (i in 1:length(folds)) {
 rowMeans(gam2_empty_df[,-1])
 
 ```
+
 This model sees improvements in MSE from the previous model, but the higher degree polynomials on Obesity only worsen the model. The addition of Obesity using degree 1 is the best of the four new models and is identical to the MSE of the model that uses the two natural splines alone. 
 
-
-GAM 3 CV
+### GAM 3 CV
 ```{r}
 # Empty vector for CV preds
 gam3_preds <- numeric(length(nutrition_cln$Deaths))
@@ -1011,10 +1011,10 @@ for (i in 1:length(folds)) {
 
 rowMeans(gam3_empty_df[,-1])
 ```
+
 Once again, we see the higher degree polynomials on Eggs only worsen the model. The addition of Eggs using degree 1 is the best of the four new models and is identical to the MSE of the model that uses the two natural splines alone.
 
-
-GAM 4 CV
+### GAM 4 CV
 ```{r}
 # Empty vector for CV preds
 gam4_preds <- numeric(length(nutrition_cln$Deaths))
