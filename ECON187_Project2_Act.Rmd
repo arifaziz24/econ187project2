@@ -1299,10 +1299,9 @@ class.tree.all.folds.acc
 
 ```
 
-The accuracy of the cross validation is suggesting uniform performance across all pruning values (0.2417596). Because of this and the previous CV suggestion of 4 beaing the best pruning value, we will not prune the tree.
+The accuracy of the cross validation is suggesting uniform performance across all pruning values (0.2417596). Because of this and the previous CV suggestion of 4 being the best pruning value, we will not prune the tree.
 
 # Random Forest: 
-
 
 ## Regression RF
 
@@ -1343,7 +1342,9 @@ mse
 
 ```
 
-## Classificatwion RF
+Running random forests on our AirBnB data returns a MSE of 18055.58 - using five fold cross validation. Compared to our basic regression tree (returning a MSE of 41588.38), our random forest algorithm dramatically outperforms it. This is probably due to the functionality of random forest algorithms, where we run multiple trees. 
+
+## Classification RF
 
 ```{r}
 library(randomForest)
@@ -1374,22 +1375,30 @@ fold1_test_data <- model_results[[1]]$test_data
 # Make predictions using the random forest model
 predictions <- predict(fold1_model, newdata = fold1_test_data, type = "class")
 
+# Accuracy Score
+class.pred <- ifelse(predictions > 0.5, 1,0)
+accuracy.c <- sum(class.pred == fold1_test_data$Guest.Satisfaction.r)/length(fold1_test_data$Guest.Satisfaction.r)
 
-mse <- mean((predictions - fold1_test_data$Guest.Satisfaction.r)^2)
-mae <- mean(abs(predictions - fold1_test_data$Guest.Satisfaction.r))
-rsquared <- 1 - sum((predictions - fold1_test_data$Guest.Satisfaction.r)^2) / sum((fold1_test_data$Guest.Satisfaction.r - mean(fold1_test_data$Guest.Satisfaction.r))^2)
+# Print Accuracy Score
+accuracy.c
 
-print(mse)
-print(mae)
-print(rsquared)
+# Print Error Score
+1-accuracy.c
 
+# mse <- mean((predictions - fold1_test_data$Guest.Satisfaction.r)^2)
+# mae <- mean(abs(predictions - fold1_test_data$Guest.Satisfaction.r))
+# rsquared <- 1 - sum((predictions - fold1_test_data$Guest.Satisfaction.r)^2) / sum((fold1_test_data$Guest.Satisfaction.r - mean(fold1_test_data$Guest.Satisfaction.r))^2)
+# 
+# print(mse)
+# print(mae)
+# print(rsquared)
 
+# [1] 0.1112281
+# [1] 0.2517696
+# [1] 0.5545155
 ```
 
-[1] 0.1112281
-[1] 0.2517696
-[1] 0.5545155
-
+After running random forests on our classification problem, we obtained a classification error score of 15.52% which is significantly lower than our basic classification tree. Random forests are more robust in that they test more tree structures. Thus, we expected a better classification performance. 
 
 # Boosting: Classification Problem
 
@@ -1754,6 +1763,12 @@ mean(gbm.opt.err.vector)
 
 Using our optimal boosting algorithm (with parameters defined by the train function), our algorithm returns an average MSE across five folds of 25325.31. This is much lower than the average MSE scores we saw in our other cross validation methods, where we tried to optimize for shrinkage and number of trees. When comparing our boosting algorithm to other techniques, we'll use this boosting algorithm as a benchmark. 
 
+# Conclusion
 
+After running different models on our AirBnB data, we find that our random forests models outperform in both classification and regression problems. Our random forest models returned lower MSE scores and classification error scores. Our second highest performing algorithm were gradient boosting models, with comparable error metrics in classification. Random forests and gradient boosting models are more robust in that they run multiple tree structures within our data cube. We'd expect one of these advanced algorithms to outperform simple trees. In conducting this comparative analysis, we mainly used five fold cross validation and a variety of train functions through a selection of R Packages. Below are the final rounded results.
+
+Regression Problem Error: Basic Regression Tree (41588.38), Random Forest (18055.58), Boosting (25325.31)
+
+Classification Problem Error: Basic Classification Tree (24.17%), Random Forest (15.52%), Boosting (16.50%). 
 
 
